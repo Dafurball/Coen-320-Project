@@ -30,21 +30,27 @@ airplane::~airplane() {
 	// TODO Auto-generated destructor stub
 }
 
-
-
-
+//start routine for each pthread of type airplane created
 void* airplane::location_update(void *arg){
+
+	//typecasting the void argument passed by pthread_create into one of type airplane
     airplane* plane = static_cast<airplane*>(arg);
+
     while (true) {
+
+    	//mutex lock to ensure only one pthread at a time can access the shared data
         m.lock();
     	plane->new_location();
     	m.unlock();
+
+    	//time for when location is updated
         sleep(1);
     }
     return nullptr;
 
 }
 
+//Method that updates an airplane's location based on their current coordinates plus their speed multiplied by the delta (which is 1 since we update every second)
 void airplane::new_location(){
     int delta = 1;
 
@@ -55,6 +61,8 @@ void airplane::new_location(){
     print();
 
 }
+
+//Prints an airplane's info, including their speed (as a whole value, not their x/y/x components).  Mostly for testing
 void airplane::print(){
 	double speed = sqrt(SpeedX*SpeedX + SpeedY*SpeedY + SpeedZ*SpeedZ);
 
