@@ -1,9 +1,3 @@
-/*
- * airplane.h
- *
- *  Created on: Oct. 14, 2024
- *      Author: dafur
- */
 
 #ifndef AIRPLANE_H_
 #define AIRPLANE_H_

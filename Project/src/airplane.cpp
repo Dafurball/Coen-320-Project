@@ -1,9 +1,4 @@
-/*
- * airplane.cpp
- *
- *  Created on: Oct. 14, 2024
- *      Author: dafur
- */
+
 #include <iostream>
 #include <cmath>
 #include <unistd.h>
