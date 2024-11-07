@@ -2,15 +2,14 @@
 #include <iostream>
 #include <cmath>
 #include <unistd.h>
-#include <mutex>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+
 #include "airplane.h"
+#include "mutex.h"
 
 using namespace std;
-
-mutex m;
 
 airplane::airplane() {
 	// TODO Auto-generated constructor stub
