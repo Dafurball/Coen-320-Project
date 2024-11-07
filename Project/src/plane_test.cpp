@@ -14,6 +14,8 @@
 using namespace std;
 
 int main() {
+
+	//Will need to find a way to have size dynamically created (maybe find a way to determine from size of file?)
 	airplane * airplanes[100];
 
 	ifstream inputFile;
@@ -43,51 +45,64 @@ int main() {
 
 	}
 
-		//Creating shared memory from airplane data
-		int shm_fd = shm_open("/airplane_data", O_CREAT | O_RDWR, 0666);  // Open or create shared memory
-	    if (shm_fd == -1) {
-	        perror("shm_open failed");
-	        return 1;
-	    }
+	///////////////////////////////////////////////////Shared Memory Creating and Set up//////////////////////////////////////////////////////////////
 
-	    //Memory mapping, this will be by the size of each airplane object multiplied by the index (number of airplane objects created
-	    airplane* shm_data = (airplane*)mmap(0, sizeof(airplane) * index, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
-	    if (shm_data == MAP_FAILED) {
-	        perror("memory mapping failed");
-	        return 1;
-	    }
+	//Creating shared memory from airplane data
+	int shared_fd = shm_open("/airplane_data", O_CREAT | O_RDWR, 0666);
+	if (shared_fd == -1) {
+		perror("shm_open failed");
+		return 1;
+	}
 
-	    // Copying data from airplane to the shared memory.  Note that even though the shared memory is different from the data of the airplane objects, it still
-	    //follows protection files (public, private).  Will need set/get methods for access later on!
-	    for (int i = 0; i < index; i++) {
-	        memcpy(&shm_data[i], airplanes[i], sizeof(airplane));
-	    }
+	//Memory mapping, this will be by the size of each airplane object multiplied by the index (number of airplane objects created)
+	airplane* shared_data = (airplane*)mmap(0, sizeof(airplane) * index, PROT_READ | PROT_WRITE, MAP_SHARED, shared_fd, 0);
+	if (shared_data == MAP_FAILED) {
+		perror("memory mapping failed");
+		return 1;
+	}
 
-	    //Quick print test to see if shared memory bit worked correctly
-	    for (int i = 0; i < index; ++i) {
-	        std::cout<< " Position: (" << shm_data[i].get_x() << ", " << shm_data[i].get_y() << ", " << shm_data[i].get_z() << ")"
-	                  << " Speed: (" << shm_data[i].get_speedX() << ", " << shm_data[i].get_speedY() << ", " << shm_data[i].get_speedZ() << ")"
-	                  << std::endl;
-	    }
+	// Copying data from airplane to the shared memory.  Note that even though the shared memory is different from the data of the airplane objects, it still
+	//follows protection files (public, private).  Will need set/get methods for access later on!
+	for (int i = 0; i < index; i++) {
+		memcpy(&shared_data[i], airplanes[i], sizeof(airplane));
+	}
 
+	//Quick print test to see if shared memory bit worked correctly, for bug testing purposes
+	for (int i = 0; i < index; ++i) {
+		std::cout<< " Position: (" << shared_data[i].get_x() << ", " << shared_data[i].get_y() << ", " << shared_data[i].get_z() << ")"
+				  << " Speed: (" << shared_data[i].get_speedX() << ", " << shared_data[i].get_speedY() << ", " << shared_data[i].get_speedZ() << ")"
+				  << std::endl;
+	}
 
-
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	pthread_t airplane_threads[index];
 
 	//creates the pthreads for each airplane object created
 	for (int i = 0; i < index; i++){
-		pthread_create(&airplane_threads[i], nullptr, airplane::location_update, airplanes[i]);
+		pthread_create(&airplane_threads[i], nullptr, airplane::location_update, &shared_data[i]);
 	}
 
 	//Have every pthread join so that they can keep running
-	for (int j = 0; j < index; j++){
-		pthread_join(airplane_threads[j], NULL);
+	//for (int j = 0; j < index; j++){
+		//pthread_join(airplane_threads[j], NULL);
 
+	//}
+
+
+    //Just a test to see if shared memory is being properly updated until I implement the print thread
+	sleep(5);
+
+	for (int i = 0; i < index; ++i) {
+		std::cout<< " Position: (" << shared_data[i].get_x() << ", " << shared_data[i].get_y() << ", " << shared_data[i].get_z() << ")"
+				  << " Speed: (" << shared_data[i].get_speedX() << ", " << shared_data[i].get_speedY() << ", " << shared_data[i].get_speedZ() << ")"
+				  << std::endl;
 	}
 
-    munmap(shm_data, sizeof(airplane) * index);  // Unmap shared memory
-    close(shm_fd);  // Close the file descriptor
+
+	//cleanup for when it's all done
+    munmap(shared_data, sizeof(airplane) * index);
+    close(shared_fd);
 
 
 	return 0;

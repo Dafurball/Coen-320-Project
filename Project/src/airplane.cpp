@@ -3,7 +3,9 @@
 #include <cmath>
 #include <unistd.h>
 #include <mutex>
-
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include "airplane.h"
 
 using namespace std;
@@ -30,7 +32,28 @@ airplane::~airplane() {
 	// TODO Auto-generated destructor stub
 }
 
+
+int airplane::get_x(){
+	return x;
+};
+int airplane::get_y(){
+	return y;
+};
+int airplane::get_z(){
+	return z;
+};
+int airplane::get_speedX(){
+	return SpeedX;
+}
+int airplane::get_speedY(){
+	return SpeedY;
+}int airplane::get_speedZ(){
+	return SpeedZ;
+}
+
 //start routine for each pthread of type airplane created
+//I now see the power of typecasting, I didnt have to change anything when changing implementation from airplane objects to shared memory!
+
 void* airplane::location_update(void *arg){
 
 	//typecasting the void argument passed by pthread_create into one of type airplane
@@ -38,7 +61,7 @@ void* airplane::location_update(void *arg){
 
     while (true) {
 
-    	//mutex lock to ensure only one pthread at a time can access the shared data
+    	//mutex lock to ensure only one pthread at a time can access the shared memory
         m.lock();
     	plane->new_location();
     	m.unlock();
@@ -58,6 +81,12 @@ void airplane::new_location(){
     y = y + SpeedY * delta;
     z = z + SpeedZ * delta;
 
+    time = time + delta;
+
+
+
+
+    //Print was used to test functionality of airplane class
     print();
 
 }
@@ -66,5 +95,5 @@ void airplane::new_location(){
 void airplane::print(){
 	double speed = sqrt(SpeedX*SpeedX + SpeedY*SpeedY + SpeedZ*SpeedZ);
 
-	cout << "Plane ID: " << id << " at time "<< time << " minute has coordinates (" << x << "," << y << "," << z << ") with a speed of "  << speed << endl;
+	cout << "Plane ID: " << id << " at time "<< time << " seconds has coordinates (" << x << "," << y << "," << z << ") with a speed of "  << speed << endl;
 }
