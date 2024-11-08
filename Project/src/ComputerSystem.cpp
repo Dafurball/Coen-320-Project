@@ -1,18 +1,18 @@
 /*
- * Radar.cpp
+ * ComputerSystem.cpp
  *
  *  Created on: Nov 8, 2024
  *      Author: 15145
  */
 
-#include "Radar.h"
+#include "ComputerSystem.h"
 
-Radar::Radar() {
+ComputerSystem::ComputerSystem() {
 	// TODO Auto-generated constructor stub
 
 }
 
-Radar::~Radar() {
+ComputerSystem::~ComputerSystem() {
 	// TODO Auto-generated destructor stub
 }
 

@@ -1,18 +1,18 @@
 /*
- * Radar.cpp
+ * ATC.cpp
  *
  *  Created on: Nov 8, 2024
  *      Author: 15145
  */
 
-#include "Radar.h"
+#include "ATC.h"
 
-Radar::Radar() {
+ATC::ATC() {
 	// TODO Auto-generated constructor stub
 
 }
 
-Radar::~Radar() {
+ATC::~ATC() {
 	// TODO Auto-generated destructor stub
 }
 

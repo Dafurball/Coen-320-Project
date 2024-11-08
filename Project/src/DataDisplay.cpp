@@ -1,18 +1,18 @@
 /*
- * Radar.cpp
+ * DataDisplay.cpp
  *
  *  Created on: Nov 8, 2024
  *      Author: 15145
  */
 
-#include "Radar.h"
+#include "DataDisplay.h"
 
-Radar::Radar() {
+DataDisplay::DataDisplay() {
 	// TODO Auto-generated constructor stub
 
 }
 
-Radar::~Radar() {
+DataDisplay::~DataDisplay() {
 	// TODO Auto-generated destructor stub
 }
 

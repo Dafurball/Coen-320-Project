@@ -1,18 +1,18 @@
 /*
- * Radar.cpp
+ * OperatorConsole.cpp
  *
  *  Created on: Nov 8, 2024
  *      Author: 15145
  */
 
-#include "Radar.h"
+#include "OperatorConsole.h"
 
-Radar::Radar() {
+OperatorConsole::OperatorConsole() {
 	// TODO Auto-generated constructor stub
 
 }
 
-Radar::~Radar() {
+OperatorConsole::~OperatorConsole() {
 	// TODO Auto-generated destructor stub
 }
 
