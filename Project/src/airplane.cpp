@@ -70,9 +70,9 @@ void* airplane::location_update(void *arg){
     while (true) {
 
     	//mutex lock to ensure only one pthread at a time can access the shared memory
-        m.lock();
+      //  m.lock();
     	plane->new_location();
-    	m.unlock();
+    	//m.unlock();
 
       //  cout << "Updated plane ID: " << plane->get_id() << endl;
 
@@ -88,11 +88,13 @@ void* airplane::location_update(void *arg){
 void airplane::new_location(){
     int delta = 1;
 
+    m.lock();
     x = x + SpeedX * delta;
     y = y + SpeedY * delta;
     z = z + SpeedZ * delta;
 
     time = time + delta;
+    m.unlock();
 
     //Print was used to test functionality of airplane class
   //  print();

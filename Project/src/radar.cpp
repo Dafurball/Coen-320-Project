@@ -14,11 +14,13 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-
+#include <semaphore.h>
 #include "airplane.h"
 #include "mutex.h"
 
 using namespace std;
+
+
 
 
 
@@ -141,11 +143,11 @@ void * radar::updater(void * arg) {
 	radar* radarObj = static_cast<radar*>(arg);
 	    while (radarObj->running) {
 
-	        m.lock();
+	  //      m.lock();
 
             radarObj->printPlanes(); // Call the existing printPlanes method
 
-            m.unlock();
+       //     m.unlock();
 
 	        sleep(5); // Sleep for 5 seconds before printing again
 	    }
@@ -156,18 +158,22 @@ void * radar::updater(void * arg) {
 airplane* radar::getAirplanes() {
     return airplanes;
 }
-
+*/
 int radar::getnumofPlanes() {
     return numofPlanes;
 }
-*/
+
 
 //Print Function
 void radar::printPlanes() {
 	for (int i = 0; i < numofPlanes; ++i) {
+
+
+			m.lock();
 			std::cout<< "ID: " << shared_data[i].get_id() << " Time: " << shared_data[i].get_time() << " Position: (" << shared_data[i].get_x() << ", " << shared_data[i].get_y() << ", " << shared_data[i].get_z() << ")"
 					  << " Speed: (" << shared_data[i].get_speedX() << ", " << shared_data[i].get_speedY() << ", " << shared_data[i].get_speedZ() << ")"
-					  << std::endl;
+					  << std::endl << flush;
+			m.unlock();
 		}
 }
 

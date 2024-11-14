@@ -1,9 +1,3 @@
-/*
- * main.cpp
- *
- *  Created on: Nov. 12, 2024
- *      Author: dafur
- */
 
 #include <iostream>
 #include <pthread.h>
@@ -17,6 +11,7 @@
 #include "mutex.h"
 #include "airplane.h"
 #include "radar.h"
+#include "ComputerSystem.h"
 
 int main(){
 
@@ -24,7 +19,13 @@ int main(){
 
 radar Radar("example.txt");
 
-Radar.startRadarThread();
+Radar.startRadarThread();	//thread that prints data every 5 seconds
+int numPlanes = Radar.getnumofPlanes();   // Retrieve numofPlanes from Radar
+
+
+ComputerSystem system(numPlanes);
+
+system.startSystemThread();
 
 
 

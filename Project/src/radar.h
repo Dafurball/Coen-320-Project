@@ -24,13 +24,13 @@ public:
 	virtual ~radar();
 
 	void loadPlanes(const string& filename);
-	void setupSharedMemory();
-	void copyDataToSharedMemory();
+	//void setupSharedMemory();
+//	void copyDataToSharedMemory();
 	void printPlanes();
 	//airplane* getAirplanes();
-	//int getnumofPlanes();
+	int getnumofPlanes();
 
-	void startAirplaneThreads();
+	//void startAirplaneThreads();
 	void stopAirplaneThreads();
 	void startRadarThread();
 	void stopRadarThread();
