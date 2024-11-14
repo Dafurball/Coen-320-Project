@@ -1,11 +1,5 @@
-/*
- * radar.cpp
- *
- *  Created on: Nov. 12, 2024
- *      Author: dafur
- */
 
-#include "radar.h"
+
 #include <iostream>
 #include <pthread.h>
 #include <fstream>
@@ -15,9 +9,9 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <semaphore.h>
-#include "airplane.h"
-#include "mutex.h"
 
+#include "radar.h"
+#include "airplane.h"
 #include "ResourceProtection.h"
 
 using namespace std;
@@ -109,10 +103,8 @@ radar::radar(const string& filename) // @suppress("Class members should be prope
 
     //Copying data from airplane to the shared memory.  Note that even though the shared memory is different from the data of the airplane objects, it still
     //follows protection files (public, private)!
-    m.lock();
     for (int i = 0; i < numofPlanes; ++i) {
         memcpy(&shared_data[i], &airplanes[i], sizeof(airplane));
-    m.unlock();
 
     }
 }
@@ -170,23 +162,27 @@ int radar::getnumofPlanes() {
 void radar::printPlanes() {
 	for (int i = 0; i < numofPlanes; ++i) {
 
+//////////////////////////////////////////Reader Lock///////////////////////////////////////////////
 	    pthread_mutex_lock(&reader_mutex);
 	    numofReaders++;
-	    if (numofReaders == 1) {  // First reader locks resource
+	    if (numofReaders == 1) {  // First reader turns on the light...
 	        sem_wait(&shared_access);
 	    }
 	    pthread_mutex_unlock(&reader_mutex);
 
-			//m.lock();
-			std::cout<< "ID: " << shared_data[i].get_id() << " Time: " << shared_data[i].get_time() << " Position: (" << shared_data[i].get_x() << ", " << shared_data[i].get_y() << ", " << shared_data[i].get_z() << ")"
-					  << " Speed: (" << shared_data[i].get_speedX() << ", " << shared_data[i].get_speedY() << ", " << shared_data[i].get_speedZ() << ")"
-					  << std::endl << flush;
-		    pthread_mutex_lock(&reader_mutex);
-		    numofReaders--;
-		    if (numofReaders == 0) {  // Last reader unlocks resource
-		        sem_post(&shared_access);
-		    }
-		    pthread_mutex_unlock(&reader_mutex);		}
+////////////////////////////////////////Critical Section///////////////////////////////////////////
+		cout<< "ID: " << shared_data[i].get_id() << " Time: " << shared_data[i].get_time() << " Position: (" << shared_data[i].get_x() << ", " << shared_data[i].get_y() << ", " << shared_data[i].get_z() << ")"
+				  << " Speed: (" << shared_data[i].get_speedX() << ", " << shared_data[i].get_speedY() << ", " << shared_data[i].get_speedZ() << ")"
+				  << endl << flush;
+
+//////////////////////////////////////////Reader Unlock//////////////////////////////////////////////
+		pthread_mutex_lock(&reader_mutex);
+		numofReaders--;
+		if (numofReaders == 0) {  // ...Last reader shuts off the light!
+			sem_post(&shared_access);
+		}
+		pthread_mutex_unlock(&reader_mutex);
+	}
 }
 
 

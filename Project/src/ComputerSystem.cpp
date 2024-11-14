@@ -55,16 +55,12 @@ void ComputerSystem::startSystemThread() {
     pthread_join(ComputerSystem_thread, nullptr);
 }
 
-// Print all loaded airplanes (for testing)
+//the method our ComputerSystem thread calls repeatedly
 void * ComputerSystem::collision(void * arg) {
 	ComputerSystem* system = static_cast<ComputerSystem*>(arg);
 	    while (system->running) {
 
-	        m.lock();
-
-            system->collisionTest(); // Call the existing printPlanes method
-
-            m.unlock();
+            system->collisionTest();
 
             sleep(1);
 
@@ -73,24 +69,26 @@ void * ComputerSystem::collision(void * arg) {
 	    return nullptr;
 }
 
-//Checks collisions
+//Checks collisions, uses nifty trick for calculating distance without having to use sqrt function
 void ComputerSystem::collisionTest(){
-int n = 1;
+int n = 1;	//how many seconds in the future we check
 
-const int min_horizontal = 9000000;
-const int min_vertical = 1000000;
+const int min_horizontal = 9000000; // 3000^2
+const int min_vertical = 1000000;	//1000^2
 
 	for (int i = 0; i < numofPlanes; i++){
 
 		for (int j = i + 1; j < numofPlanes; j++){
 
+//////////////////////////////////////////Reader Lock///////////////////////////////////////////////
 		    pthread_mutex_lock(&reader_mutex);
 		    numofReaders++;
-		    if (numofReaders == 1) {  // First reader locks resource
+		    if (numofReaders == 1) {  //First reader turns on the light...
 		        sem_wait(&shared_access);
 		    }
 		    pthread_mutex_unlock(&reader_mutex);
 
+/////////////////////////////////////Critical Section///////////////////////////////////////////////
 			int future_x_of_i = shared_data[i].get_x() + shared_data[i].get_speedX() * n;
 			int future_y_of_i = shared_data[i].get_y() + shared_data[i].get_speedY() * n;
 			int future_z_of_i = shared_data[i].get_z() + shared_data[i].get_speedZ() * n;
@@ -99,12 +97,15 @@ const int min_vertical = 1000000;
 			int future_y_of_j = shared_data[j].get_y() + shared_data[j].get_speedY() * n;
 			int future_z_of_j = shared_data[j].get_z() + shared_data[j].get_speedZ() * n;
 
-		    pthread_mutex_lock(&reader_mutex);
+//////////////////////////////////////////Reader Unlock////////////////////////////////////////////
+			pthread_mutex_lock(&reader_mutex);
 		    numofReaders--;
-		    if (numofReaders == 0) {  // Last reader unlocks resource
+		    if (numofReaders == 0) {  //...Last reader turns off the light!
 		        sem_post(&shared_access);
 		    }
 		    pthread_mutex_unlock(&reader_mutex);
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 			int check_x = future_x_of_j - future_x_of_i;
 			int check_y = future_y_of_j - future_y_of_i;
@@ -123,7 +124,7 @@ const int min_vertical = 1000000;
 
 }
 
-//Print function used to test if memory mapping was correct
+//Print function used to test if memory mapping was correct, was just for testing purposes (hence why no critical section protection
 void ComputerSystem::printPlanes() {
     if (shared_data == MAP_FAILED) {
         cerr << "Shared memory was not mapped correctly" << endl;

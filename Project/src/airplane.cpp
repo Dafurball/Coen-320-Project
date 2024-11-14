@@ -7,7 +7,6 @@
 #include <fcntl.h>
 
 #include "airplane.h"
-#include "mutex.h"
 #include "ResourceProtection.h"
 
 using namespace std;
@@ -70,13 +69,7 @@ void* airplane::location_update(void *arg){
 
     while (true) {
 
-    	//mutex lock to ensure only one pthread at a time can access the shared memory
-      //  m.lock();
     	plane->new_location();
-    	//m.unlock();
-
-      //  cout << "Updated plane ID: " << plane->get_id() << endl;
-
 
     	//time for when location is updated
         sleep(1);

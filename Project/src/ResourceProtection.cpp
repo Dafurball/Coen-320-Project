@@ -1,14 +1,9 @@
-/*
- * ResourceProtection.cpp
- *
- *  Created on: Nov. 14, 2024
- *      Author: dafur
- */
+
 
 #include "ResourceProtection.h"
 
 sem_t shared_access;                      // Semaphore for access control
-pthread_mutex_t reader_mutex = PTHREAD_MUTEX_INITIALIZER; // Mutex for reader count
+pthread_mutex_t reader_mutex = PTHREAD_MUTEX_INITIALIZER; // Mutex for reader_mutex
 int numofReaders = 0;                         // Initialize reader count to 0
 
 // Initialization function to set up semaphores and mutexes

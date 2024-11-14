@@ -1,9 +1,4 @@
-/*
- * ResourceProtection.h
- *
- *  Created on: Nov. 14, 2024
- *      Author: dafur
- */
+
 
 #ifndef SRC_RESOURCEPROTECTION_H_
 #define SRC_RESOURCEPROTECTION_H_

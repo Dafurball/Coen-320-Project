@@ -8,7 +8,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#include "mutex.h"
 #include "airplane.h"
 #include "radar.h"
 #include "ComputerSystem.h"
