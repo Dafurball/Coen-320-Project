@@ -28,7 +28,6 @@ public:
 	void new_location();
     static void* location_update(void* arg);
 
-
 	void print();
 
 

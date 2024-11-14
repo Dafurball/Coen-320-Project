@@ -17,12 +17,13 @@ using namespace std;
 mutex m;	//mutex m that will be shared globally between airplane threads and printer thread
 
 
-int main() {
+int main1() {
 
 	///////////////////////////////////////////Creating Airplane Objects from File Saved//////////////////////////////////////////////////////////////
 
 	//Will need to find a way to have size dynamically created (maybe find a way to determine from size of file?)
 	airplane * airplanes[100];
+
 
 	ifstream inputFile;
 
@@ -56,8 +57,14 @@ int main() {
 	//Creating shared memory from airplane data
 	int shared_fd = shm_open("/airplane_data", O_CREAT | O_RDWR, 0666);
 	if (shared_fd == -1) {
-		perror("shm_open failed");
+		perror("shm_open failed, smh");
 		return 1;
+	}
+
+	//Truncate the shared memory to the correct size
+	if (ftruncate(shared_fd, sizeof(airplane) * index) == -1) {
+	    perror("ftruncate failed");
+	    return 1;
 	}
 
 	//Memory mapping, this will be by the size of each airplane object multiplied by the index (number of airplane objects created)
@@ -67,7 +74,7 @@ int main() {
 		return 1;
 	}
 
-	// Copying data from airplane to the shared memory.  Note that even though the shared memory is different from the data of the airplane objects, it still
+	//Copying data from airplane to the shared memory.  Note that even though the shared memory is different from the data of the airplane objects, it still
 	//follows protection files (public, private).  Will need set/get methods for access later on!
 	for (int i = 0; i < index; i++) {
 		memcpy(&shared_data[i], airplanes[i], sizeof(airplane));
@@ -75,7 +82,7 @@ int main() {
 
 	//Quick print test to see if shared memory bit worked correctly, for bug testing purposes
 	for (int i = 0; i < index; ++i) {
-		std::cout<< " Position: (" << shared_data[i].get_x() << ", " << shared_data[i].get_y() << ", " << shared_data[i].get_z() << ")"
+		std::cout<< "Position: (" << shared_data[i].get_x() << ", " << shared_data[i].get_y() << ", " << shared_data[i].get_z() << ")"
 				  << " Speed: (" << shared_data[i].get_speedX() << ", " << shared_data[i].get_speedY() << ", " << shared_data[i].get_speedZ() << ")"
 				  << std::endl;
 	}
@@ -96,11 +103,11 @@ int main() {
 	//}
 
 
-    //Just a test to see if shared memory is being properly updated until I implement the print thread
+    //Just a test to see if shared memory is being properly updated until I implement the rest
 	sleep(5);
 
 	for (int i = 0; i < index; ++i) {
-		std::cout<< " Position: (" << shared_data[i].get_x() << ", " << shared_data[i].get_y() << ", " << shared_data[i].get_z() << ")"
+		std::cout<< "Position: (" << shared_data[i].get_x() << ", " << shared_data[i].get_y() << ", " << shared_data[i].get_z() << ")"
 				  << " Speed: (" << shared_data[i].get_speedX() << ", " << shared_data[i].get_speedY() << ", " << shared_data[i].get_speedZ() << ")"
 				  << std::endl;
 	}

@@ -31,22 +31,31 @@ airplane::~airplane() {
 	// TODO Auto-generated destructor stub
 }
 
+int airplane::get_id(){
+	return id;
+}
+
+int airplane::get_time(){
+	return time;
+}
 
 int airplane::get_x(){
 	return x;
-};
+}
 int airplane::get_y(){
 	return y;
-};
+}
 int airplane::get_z(){
 	return z;
-};
+}
 int airplane::get_speedX(){
 	return SpeedX;
 }
 int airplane::get_speedY(){
 	return SpeedY;
-}int airplane::get_speedZ(){
+}
+
+int airplane::get_speedZ(){
 	return SpeedZ;
 }
 
@@ -65,6 +74,9 @@ void* airplane::location_update(void *arg){
     	plane->new_location();
     	m.unlock();
 
+      //  cout << "Updated plane ID: " << plane->get_id() << endl;
+
+
     	//time for when location is updated
         sleep(1);
     }
@@ -82,11 +94,8 @@ void airplane::new_location(){
 
     time = time + delta;
 
-
-
-
     //Print was used to test functionality of airplane class
-    print();
+  //  print();
 
 }
 
