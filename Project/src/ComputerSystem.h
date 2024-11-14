@@ -20,7 +20,6 @@
 
 #include "radar.h"
 #include "airplane.h"
-#include "mutex.h"
 
 class ComputerSystem {
 public:
