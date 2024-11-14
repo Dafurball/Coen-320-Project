@@ -13,6 +13,7 @@
 #include "ComputerSystem.h"
 #include "radar.h"
 #include "airplane.h"
+#include "ResourceProtection.h"
 
 using namespace std;
 
@@ -83,6 +84,12 @@ const int min_vertical = 1000000;
 
 		for (int j = i + 1; j < numofPlanes; j++){
 
+		    pthread_mutex_lock(&reader_mutex);
+		    numofReaders++;
+		    if (numofReaders == 1) {  // First reader locks resource
+		        sem_wait(&shared_access);
+		    }
+		    pthread_mutex_unlock(&reader_mutex);
 
 			int future_x_of_i = shared_data[i].get_x() + shared_data[i].get_speedX() * n;
 			int future_y_of_i = shared_data[i].get_y() + shared_data[i].get_speedY() * n;
@@ -92,6 +99,12 @@ const int min_vertical = 1000000;
 			int future_y_of_j = shared_data[j].get_y() + shared_data[j].get_speedY() * n;
 			int future_z_of_j = shared_data[j].get_z() + shared_data[j].get_speedZ() * n;
 
+		    pthread_mutex_lock(&reader_mutex);
+		    numofReaders--;
+		    if (numofReaders == 0) {  // Last reader unlocks resource
+		        sem_post(&shared_access);
+		    }
+		    pthread_mutex_unlock(&reader_mutex);
 
 			int check_x = future_x_of_j - future_x_of_i;
 			int check_y = future_y_of_j - future_y_of_i;

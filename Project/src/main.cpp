@@ -12,20 +12,21 @@
 #include "airplane.h"
 #include "radar.h"
 #include "ComputerSystem.h"
+#include "ResourceProtection.h"
 
 int main(){
 
+	initializeResourceProtection();
+
+	radar Radar("example.txt");
+
+	Radar.startRadarThread();	//thread that prints data every 5 seconds
+	int numPlanes = Radar.getnumofPlanes();   // Retrieve numofPlanes from Radar
 
 
-radar Radar("example.txt");
+	ComputerSystem system(numPlanes);
 
-Radar.startRadarThread();	//thread that prints data every 5 seconds
-int numPlanes = Radar.getnumofPlanes();   // Retrieve numofPlanes from Radar
-
-
-ComputerSystem system(numPlanes);
-
-system.startSystemThread();
+	system.startSystemThread();
 
 
 

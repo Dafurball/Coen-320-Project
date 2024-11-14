@@ -18,6 +18,8 @@
 #include "airplane.h"
 #include "mutex.h"
 
+#include "ResourceProtection.h"
+
 using namespace std;
 
 
@@ -168,13 +170,23 @@ int radar::getnumofPlanes() {
 void radar::printPlanes() {
 	for (int i = 0; i < numofPlanes; ++i) {
 
+	    pthread_mutex_lock(&reader_mutex);
+	    numofReaders++;
+	    if (numofReaders == 1) {  // First reader locks resource
+	        sem_wait(&shared_access);
+	    }
+	    pthread_mutex_unlock(&reader_mutex);
 
-			m.lock();
+			//m.lock();
 			std::cout<< "ID: " << shared_data[i].get_id() << " Time: " << shared_data[i].get_time() << " Position: (" << shared_data[i].get_x() << ", " << shared_data[i].get_y() << ", " << shared_data[i].get_z() << ")"
 					  << " Speed: (" << shared_data[i].get_speedX() << ", " << shared_data[i].get_speedY() << ", " << shared_data[i].get_speedZ() << ")"
 					  << std::endl << flush;
-			m.unlock();
-		}
+		    pthread_mutex_lock(&reader_mutex);
+		    numofReaders--;
+		    if (numofReaders == 0) {  // Last reader unlocks resource
+		        sem_post(&shared_access);
+		    }
+		    pthread_mutex_unlock(&reader_mutex);		}
 }
 
 

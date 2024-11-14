@@ -8,6 +8,7 @@
 
 #include "airplane.h"
 #include "mutex.h"
+#include "ResourceProtection.h"
 
 using namespace std;
 
@@ -88,14 +89,13 @@ void* airplane::location_update(void *arg){
 void airplane::new_location(){
     int delta = 1;
 
-    m.lock();
+    sem_wait(&shared_access);
     x = x + SpeedX * delta;
     y = y + SpeedY * delta;
     z = z + SpeedZ * delta;
 
     time = time + delta;
-    m.unlock();
-
+    sem_post(&shared_access);
     //Print was used to test functionality of airplane class
   //  print();
 
