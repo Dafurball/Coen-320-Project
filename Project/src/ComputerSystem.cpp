@@ -52,13 +52,19 @@ ComputerSystem::~ComputerSystem() {
 void ComputerSystem::startSystemThread() {
     running = true;
     pthread_create(&ComputerSystem_thread, nullptr, collision, this);
-    pthread_join(ComputerSystem_thread, nullptr);
+   // pthread_join(ComputerSystem_thread, nullptr);
+}
+
+pthread_t ComputerSystem::getSystemThread() const {
+    return ComputerSystem_thread;
 }
 
 //the method our ComputerSystem thread calls repeatedly
 void * ComputerSystem::collision(void * arg) {
 	ComputerSystem* system = static_cast<ComputerSystem*>(arg);
 	    while (system->running) {
+
+
 
             system->collisionTest();
 
@@ -98,12 +104,12 @@ const int min_vertical = 1000000;	//1000^2
 			int future_z_of_j = shared_data[j].get_z() + shared_data[j].get_speedZ() * n;
 
 //////////////////////////////////////////Reader Unlock////////////////////////////////////////////
-			pthread_mutex_lock(&reader_mutex);
+		/*	pthread_mutex_lock(&reader_mutex);
 		    numofReaders--;
 		    if (numofReaders == 0) {  //...Last reader turns off the light!
 		        sem_post(&shared_access);
 		    }
-		    pthread_mutex_unlock(&reader_mutex);
+		    pthread_mutex_unlock(&reader_mutex); */
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -115,8 +121,17 @@ const int min_vertical = 1000000;	//1000^2
 			int squared_vertical_distance = check_z * check_z;
 
 			if ((squared_horitzontal_distance <= min_horizontal) && (squared_vertical_distance <= min_vertical)){
+	            std::lock_guard<std::mutex> lock(cout_mutex);
+
 				cout << "collision detected between plane " << shared_data[i].get_id() << " and plane " << shared_data[j].get_id() << " will happen between time  " << shared_data[i].get_time() << " and " << shared_data[i].get_time() + n <<"!"<< endl << flush;
 			}
+
+			pthread_mutex_lock(&reader_mutex);
+		    numofReaders--;
+		    if (numofReaders == 0) {  //...Last reader turns off the light!
+		        sem_post(&shared_access);
+		    }
+		    pthread_mutex_unlock(&reader_mutex);
 
 		}
 

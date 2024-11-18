@@ -3,6 +3,7 @@
 #include "ResourceProtection.h"
 
 sem_t shared_access;                      // Semaphore for access control
+mutex cout_mutex;
 pthread_mutex_t reader_mutex = PTHREAD_MUTEX_INITIALIZER; // Mutex for reader_mutex
 int numofReaders = 0;                         // Initialize reader count to 0
 

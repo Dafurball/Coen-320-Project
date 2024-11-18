@@ -5,8 +5,12 @@
 
 #include <pthread.h>
 #include <semaphore.h>
+#include <mutex>
+
+using namespace std;
 
 extern sem_t shared_access;
+extern mutex cout_mutex;
 extern pthread_mutex_t reader_mutex;
 extern int numofReaders;
 

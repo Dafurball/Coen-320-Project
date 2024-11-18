@@ -33,6 +33,7 @@ public:
 	//void startAirplaneThreads();
 	void stopAirplaneThreads();
 	void startRadarThread();
+	pthread_t getRadarThread() const;
 	void stopRadarThread();
 
 	static void* updater(void* arg);

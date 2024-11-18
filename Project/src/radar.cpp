@@ -84,7 +84,7 @@ radar::radar(const string& filename) // @suppress("Class members should be prope
         return;
     }
 
-    //Truncate the shared memory to the correct size (big errors if not included I found out lol)
+    //Truncate the shared memory to the correct size (big errors if not done I found out lol)
     if (ftruncate(shared_fd, sizeof(airplane) * numofPlanes) == -1) {
         perror("ftruncate failed");
         return;
@@ -122,7 +122,11 @@ void radar::stopAirplaneThreads() {
 void radar::startRadarThread() {
     running = true;
     pthread_create(&radar_thread, nullptr, radar::updater, this);
-    pthread_join(radar_thread, nullptr);
+  //  pthread_join(radar_thread, nullptr);
+}
+
+pthread_t radar::getRadarThread() const {
+    return radar_thread;
 }
 
 //...and then end the radar thread!
@@ -171,6 +175,8 @@ void radar::printPlanes() {
 	    pthread_mutex_unlock(&reader_mutex);
 
 ////////////////////////////////////////Critical Section///////////////////////////////////////////
+        std::lock_guard<std::mutex> lock(cout_mutex);
+
 		cout<< "ID: " << shared_data[i].get_id() << " Time: " << shared_data[i].get_time() << " Position: (" << shared_data[i].get_x() << ", " << shared_data[i].get_y() << ", " << shared_data[i].get_z() << ")"
 				  << " Speed: (" << shared_data[i].get_speedX() << ", " << shared_data[i].get_speedY() << ", " << shared_data[i].get_speedZ() << ")"
 				  << endl << flush;

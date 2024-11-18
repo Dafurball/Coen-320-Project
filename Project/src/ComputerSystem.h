@@ -26,6 +26,7 @@ public:
 	ComputerSystem(int numPlanes);
 	virtual ~ComputerSystem();
 	void startSystemThread();
+	pthread_t getSystemThread() const;
 	void collisionTest();
 	void printPlanes();
 

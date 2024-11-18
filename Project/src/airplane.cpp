@@ -82,13 +82,18 @@ void* airplane::location_update(void *arg){
 void airplane::new_location(){
     int delta = 1;
 
+    pthread_mutex_lock(&reader_mutex);
     sem_wait(&shared_access);
     x = x + SpeedX * delta;
     y = y + SpeedY * delta;
     z = z + SpeedZ * delta;
 
     time = time + delta;
+    pthread_mutex_unlock(&reader_mutex);
+
     sem_post(&shared_access);
+    pthread_mutex_unlock(&reader_mutex);
+
     //Print was used to test functionality of airplane class
   //  print();
 
