@@ -16,11 +16,17 @@ public:
 	int get_time();
 	int get_id();
 	int get_coords();
+	int get_x();
+	int get_y();
+	int get_z();
+	int get_speedX();
+	int get_speedY();
+	int get_speedZ();
+
 	int get_speed();
 
 	void new_location();
     static void* location_update(void* arg);
-
 
 	void print();
 
