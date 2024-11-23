@@ -13,6 +13,7 @@
 #include "radar.h"
 #include "airplane.h"
 #include "ResourceProtection.h"
+#include "Timer.h"
 
 using namespace std;
 
@@ -27,9 +28,7 @@ using namespace std;
 
 radar::~radar() {
     stopRadarThread();
-    stopAirplaneThreads();
-    delete[] airplanes;
-    delete[] airplane_threads;
+
 
     if (shared_data) {
         munmap(shared_data, sizeof(airplane) * numofPlanes);
@@ -41,41 +40,8 @@ radar::~radar() {
 }
 
 // Constructor to load planes from file, as well as to set up shared memory and load planes to it
-radar::radar(const string& filename) // @suppress("Class members should be properly initialized")
-    : airplanes(nullptr), numofPlanes(0), shared_fd(-1), shared_data(nullptr),
-      airplane_threads(nullptr), running(false) {
+radar::radar(int numPlanes): numofPlanes(numPlanes), running(false) {
 
-	//File location is in the VM target, not windows!  PATH: /data/var/tmp
-    ifstream inputFile(filename);
-    if (!inputFile) {
-        cerr << "Error opening file: " << filename << endl;
-        return;
-    }
-
-    //Will keep track of how many airplane objects are created
-    string line;
-    while (getline(inputFile, line)) {
-        if (!line.empty()) numofPlanes++;
-    }
-
-    // Allocate array of airplanes based on number of planes (numofPlanes)
-    airplanes = new airplane[numofPlanes];
-    airplane_threads = new pthread_t[numofPlanes];
-
-    // Resets cursor of file from when we found out number of planes
-    inputFile.clear();
-    inputFile.seekg(0);
-
-	//Standard airplane object creation from contents of a file
-    int index = 0;
-    while (getline(inputFile, line) && index < numofPlanes) {
-        istringstream iss(line);
-        int time, id, x, y, z, speedX, speedY, speedZ;
-        if (iss >> time >> id >> x >> y >> z >> speedX >> speedY >> speedZ) {
-            airplanes[index] = airplane(time, id, x, y, z, speedX, speedY, speedZ);
-            index++;
-        }
-    }
 
 	//Creating shared memory for airplane data
     shared_fd = shm_open("/airplane_data", O_CREAT | O_RDWR, 0666);
@@ -96,26 +62,7 @@ radar::radar(const string& filename) // @suppress("Class members should be prope
         perror("mmap failed");
     }
 
-    //Creates the threads of type airplane
-    for (int i = 0; i < numofPlanes; i++) {
-        pthread_create(&airplane_threads[i], nullptr, airplane::location_update, &shared_data[i]);
-    }
 
-    //Copying data from airplane to the shared memory.  Note that even though the shared memory is different from the data of the airplane objects, it still
-    //follows protection files (public, private)!
-    for (int i = 0; i < numofPlanes; ++i) {
-        memcpy(&shared_data[i], &airplanes[i], sizeof(airplane));
-
-    }
-}
-
-
-
-//Stop airplane threads
-void radar::stopAirplaneThreads() {
-    for (int i = 0; i < numofPlanes; i++) {
-        pthread_cancel(airplane_threads[i]);
-    }
 }
 
 //Start the radar thread (to be done in main.cpp unless I can find a better solution)...
@@ -140,54 +87,50 @@ void radar::stopRadarThread() {
 void * radar::updater(void * arg) {
 	radar* radarObj = static_cast<radar*>(arg);
 	    while (radarObj->running) {
+	    	sem_wait(&radar_semaphore);
 
-	  //      m.lock();
 
             radarObj->printPlanes(); // Call the existing printPlanes method
 
-       //     m.unlock();
-
-	        sleep(5); // Sleep for 5 seconds before printing again
 	    }
 	    return nullptr;
 }
 
-/*
-airplane* radar::getAirplanes() {
-    return airplanes;
-}
-*/
-int radar::getnumofPlanes() {
-    return numofPlanes;
-}
 
 
-//Print Function
+//Print Function, used for testing
 void radar::printPlanes() {
 	for (int i = 0; i < numofPlanes; ++i) {
 
 //////////////////////////////////////////Reader Lock///////////////////////////////////////////////
-	    pthread_mutex_lock(&reader_mutex);
+	  /*  pthread_mutex_lock(&reader_mutex);
 	    numofReaders++;
 	    if (numofReaders == 1) {  // First reader turns on the light...
 	        sem_wait(&shared_access);
 	    }
-	    pthread_mutex_unlock(&reader_mutex);
+	    pthread_mutex_unlock(&reader_mutex);*/
+	pthread_rwlock_rdlock(&rwlock);
 
+		//if (shared_data[i].get_time() < global_time){
+
+	//	}
+
+		//else{
 ////////////////////////////////////////Critical Section///////////////////////////////////////////
         std::lock_guard<std::mutex> lock(cout_mutex);
-
 		cout<< "ID: " << shared_data[i].get_id() << " Time: " << shared_data[i].get_time() << " Position: (" << shared_data[i].get_x() << ", " << shared_data[i].get_y() << ", " << shared_data[i].get_z() << ")"
 				  << " Speed: (" << shared_data[i].get_speedX() << ", " << shared_data[i].get_speedY() << ", " << shared_data[i].get_speedZ() << ")"
 				  << endl << flush;
 
 //////////////////////////////////////////Reader Unlock//////////////////////////////////////////////
-		pthread_mutex_lock(&reader_mutex);
+		pthread_rwlock_unlock(&rwlock);
+	//	}
+		/*pthread_mutex_lock(&reader_mutex);
 		numofReaders--;
 		if (numofReaders == 0) {  // ...Last reader shuts off the light!
 			sem_post(&shared_access);
 		}
-		pthread_mutex_unlock(&reader_mutex);
+		pthread_mutex_unlock(&reader_mutex);*/
 	}
 }
 

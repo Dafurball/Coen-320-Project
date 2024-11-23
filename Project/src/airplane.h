@@ -36,6 +36,7 @@ private:
 	int id;
 	int x,y,z;
 	int SpeedX,SpeedY,SpeedZ;
+	int delta = 1;
 };
 
 
