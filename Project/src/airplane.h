@@ -31,12 +31,15 @@ public:
 	void print();
 
 
+
 private:
+
 	int time;
 	int id;
 	int x,y,z;
 	int SpeedX,SpeedY,SpeedZ;
 	int delta = 1;
+
 };
 
 

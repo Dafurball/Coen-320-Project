@@ -33,11 +33,11 @@ void OperatorConsole::sendCommand(int aircraftID, const std::string& command){
 	// Open the channel to connect to the Computer System (server)
 	    int coid = name_open(CHANNEL_NAME, 0);
 	    if (coid == -1) {
-	        cerr << "Operator " << client_id << " failed to connect to channel: " << CHANNEL_NAME << endl;
+	        cerr << "Operator " << " failed to connect to channel: " << CHANNEL_NAME << endl;
 	        return;
 	    }
 
-	    cout << "Operator " << client_id << " connected to server on channel: " << CHANNEL_NAME << endl;
+	    cout << "Operator " <<  " connected to server on channel: " << CHANNEL_NAME << endl;
 
 	    // 2. Prepare the message structure
 	       msg_struct msg;
@@ -63,5 +63,5 @@ void OperatorConsole::sendCommand(int aircraftID, const std::string& command){
 
 	       // 6. Close the connection to the server
 	       name_close(coid);
+	       return;
 }
-

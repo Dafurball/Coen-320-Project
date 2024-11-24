@@ -1,5 +1,3 @@
-
-
 #ifndef SRC_OPERATORCONSOLE_H_
 #define SRC_OPERATORCONSOLE_H_
 
@@ -24,7 +22,7 @@
 class OperatorConsole {
 
 public:
-	OperatorConsole(int numPlanes);
+	OperatorConsole();
 	virtual ~OperatorConsole();
 
 

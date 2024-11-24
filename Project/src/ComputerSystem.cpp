@@ -10,6 +10,7 @@
 #include <pthread.h>
 #include <mutex>
 
+#include <sys/dispatch.h>
 #include "ComputerSystem.h"
 #include "radar.h"
 #include "airplane.h"
@@ -17,7 +18,12 @@
 
 using namespace std;
 
-ComputerSystem::ComputerSystem(int numPlanes): numofPlanes(numPlanes), running(false) {
+typedef struct {
+    unsigned int id;   // Identifier for the message (e.g., Aircraft ID)
+    char body[100];    // Content of the message (e.g., command or data)
+} msg_struct;
+
+ComputerSystem::ComputerSystem(int numPlanes): numofPlanes(numPlanes), running_collision(false) {
     // Open the shared memory segment created by radar
     shm_fd= shm_open("/airplane_data", O_CREAT | O_RDWR, 0666);
     if (shm_fd == -1) {
@@ -39,29 +45,20 @@ ComputerSystem::ComputerSystem(int numPlanes): numofPlanes(numPlanes), running(f
         close(shm_fd);
         return;
     }
-
-
-    //Valeriia***************************************************
-    // Create a communication channel for IPC between Computer System and Operator Console
-    // Create a communication channel
-//        channelID = ChannelCreate(0);
-//        if (channelID == -1) {
-//            cerr << "Error creating channel for ComputerSystem" << endl;
-//            return;
-//        }
-//
-//        cout << "ComputerSystem: Channel created with ID: " << channelID << endl;
 }
 
 ComputerSystem::~ComputerSystem() {
-
-
-
+	// TODO Auto-generated destructor stub
 }
 
 void ComputerSystem::startSystemThread() {
-    running = true;
+    running_collision = true;
     pthread_create(&ComputerSystem_thread, nullptr, collision, this);
+}
+
+void ComputerSystem::startComms(){
+	running_coms = true;
+	pthread_create(&comms_thread, nullptr, startServer, this);
 }
 
 //Used to join computerSystem pthread in main
@@ -69,11 +66,63 @@ pthread_t ComputerSystem::getSystemThread() const {
     return ComputerSystem_thread;
 }
 
+pthread_t ComputerSystem::getComThread() const {
+    return comms_thread;
+}
+
+
+
+
+void* ComputerSystem::startServer(void*) {
+	    // 1. Create a connection name for the server
+	    name_attach_t* attach = name_attach(NULL, "ComputerSystemServer", 0);
+	    if (attach == NULL) {
+	        perror("name_attach");
+	        nullptr;
+	    }
+
+	    std::cout << "ComputerSystem: Server is running, waiting for messages..." << std::endl;
+
+	    // 2. Listen for incoming messages
+	    while (true) {
+	        int rcvid;
+	        msg_struct msg; // Message received from the client
+	        rcvid = MsgReceive(attach->chid, &msg, sizeof(msg), NULL);
+
+	        if (rcvid == -1) {
+	            perror("MsgReceive");
+	            continue;
+	        }
+
+	        if (rcvid == 0) {
+	           //filter out background noise
+	        	continue;
+	        }
+
+	        std::cout << "ComputerSystem: Received command for Aircraft " << msg.id
+	                  << ": " << msg.body << std::endl;
+
+	        // Simulate processing the command
+	        std::string processedMessage = "Processed Command: " + std::string(msg.body);
+
+	        // 3. Reply back to the client
+	        msg_struct reply;
+	        reply.id = msg.id;
+	        strncpy(reply.body, processedMessage.c_str(), sizeof(reply.body) - 1);
+	        reply.body[sizeof(reply.body) - 1] = '\0'; // Ensure null termination
+
+	        MsgReply(rcvid, 0, &reply, sizeof(reply));
+	    }
+
+	    // 4. Detach the name
+	    name_detach(attach, 0);
+	    nullptr;
+}
 
 //the method our ComputerSystem thread calls repeatedly
 void * ComputerSystem::collision(void * arg) {
 	ComputerSystem* system = static_cast<ComputerSystem*>(arg);
-	    while (system->running) {
+	    while (system->running_collision) {
 
 	    	sem_wait(&collision_semaphore);
 
@@ -119,27 +168,11 @@ void ComputerSystem::collisionTest() {
                 std::cout << "Collision detected between plane " << shared_data[i].get_id()
                           << " and plane " << shared_data[j].get_id()
                           << " will occur within " << delta << " second(s)!" << std::endl;
-
-
-
-
-
             }
 
             pthread_rwlock_unlock(&rwlock);
         }
     }
 }
-//****************************************************************************
-//Valeriia
-// Emit an alert to notify the operator
-void ComputerSystem::emitAlert(int planeID, const char* message) {
-    Message msg;
-    msg.planeID = planeID;
-    strncpy(msg.alert, message, sizeof(msg.alert) - 1);
 
-    // Send the alert to the operator console
-    cout << "ComputerSystem: Sending alert for Plane " << planeID << endl;
-    MsgSend(channelID, &msg, sizeof(msg), nullptr, 0);
-}
 

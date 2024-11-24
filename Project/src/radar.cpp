@@ -13,7 +13,6 @@
 #include "radar.h"
 #include "airplane.h"
 #include "ResourceProtection.h"
-#include "Timer.h"
 
 using namespace std;
 
