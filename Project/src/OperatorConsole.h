@@ -32,11 +32,20 @@ public:
 
 	void sendCommand(int aircraftID, const std::string& command);
 
+	pthread_t getconsoleThread() const;
+
 
 private:
 
+	pthread_t consoleThread;
+	// Flag to control the running state of the thread
+	    std::atomic<bool> runningOperatorConsole;
 
-	bool runningOperatorConsole;
+	    // Static function to run as the pthread entry point
+	    static void* processCommands(void* arg);
+
+	    // Internal method for processing user commands
+	    void handleCommands();
 
 
 

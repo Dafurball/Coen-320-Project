@@ -11,21 +11,65 @@ using namespace std;
 
 #define CHANNEL_NAME "ComputerSystemServer"
 
+#define ASTERISKS "\n*************************************************************\n"
+
 typedef struct {
     unsigned int id;   // Identifier for the message (e.g., Aircraft ID)
     char body[100];    // Content of the message (e.g., command or data)
 } msg_struct;
 
 
-
-OperatorConsole::OperatorConsole() {
-
-
-}
+OperatorConsole::OperatorConsole() : runningOperatorConsole(false) {}
 
 OperatorConsole::~OperatorConsole() {
 	// TODO Auto-generated destructor stub
 }
+
+
+void OperatorConsole::startOperatorConsoleThread() {
+    runningOperatorConsole = true;
+    pthread_create(&consoleThread, nullptr, processCommands, this);
+}
+
+void* OperatorConsole::processCommands(void* arg) {
+    OperatorConsole* console = static_cast<OperatorConsole*>(arg);
+    console->handleCommands();
+    return nullptr;
+}
+
+void OperatorConsole::handleCommands() {
+    std::string command;
+
+    while (runningOperatorConsole) {
+        std::cout << ">> "; // Prompt for user input
+        std::getline(std::cin, command);
+
+        if (command == "exit") {
+            std::cout << "Exiting Operator Console...\n";
+            runningOperatorConsole = false;
+            break;
+        }
+
+        // Parse the command
+        size_t spacePos = command.find(' ');
+        if (spacePos == std::string::npos) {
+            std::cerr << "Invalid command format. Use: <AircraftID> <Command>\n";
+            continue;
+        }
+
+        std::string idStr = command.substr(0, spacePos);
+        std::string action = command.substr(spacePos + 1);
+
+        try {
+            int aircraftID = std::stoi(idStr); // Convert Aircraft ID to an integer
+            sendCommand(aircraftID, action);
+        } catch (const std::exception& e) {
+            std::cerr << "Error: Invalid Aircraft ID.\n";
+        }
+    }
+}
+
+
 
 void OperatorConsole::sendCommand(int aircraftID, const std::string& command){
 
@@ -37,7 +81,7 @@ void OperatorConsole::sendCommand(int aircraftID, const std::string& command){
 	        return;
 	    }
 
-	    cout << "Operator " <<  " connected to server on channel: " << CHANNEL_NAME << endl;
+	    cout << ASTERISKS << "Operator " <<  " connected to server on channel: " << CHANNEL_NAME << ASTERISKS<< endl;
 
 	    // 2. Prepare the message structure
 	       msg_struct msg;
@@ -45,7 +89,7 @@ void OperatorConsole::sendCommand(int aircraftID, const std::string& command){
 	       strncpy(msg.body, command.c_str(), sizeof(msg.body) - 1);
 	       msg.body[sizeof(msg.body) - 1] = '\0'; // Ensure null termination
 
-	       std::cout << "OperatorConsole: Sending command to ComputerSystem: " << msg.body << std::endl;
+	       std::cout << ASTERISKS<<"OperatorConsole: Sending command to ComputerSystem: " << msg.body <<ASTERISKS<< std::endl;
 
 	       // 3. Structure for the server's reply
 	       msg_struct reply;
@@ -59,9 +103,49 @@ void OperatorConsole::sendCommand(int aircraftID, const std::string& command){
 	       }
 
 	       // 5. Display the server's reply
-	       std::cout << "OperatorConsole: Received reply from ComputerSystem: " << reply.body << std::endl;
+	       std::cout <<ASTERISKS<< "OperatorConsole: Received reply from ComputerSystem: " << reply.body <<ASTERISKS<< std::endl;
 
 	       // 6. Close the connection to the server
 	       name_close(coid);
 	       return;
 }
+
+pthread_t OperatorConsole::getconsoleThread() const {
+    return consoleThread;
+}
+
+
+
+//void OperatorConsole::processCommands() {
+//    std::string command;
+//    while (runningOperatorConsole) {
+//        std::cout << ">> ";
+//        std::getline(std::cin, command);
+//
+//        if (command == "exit") {
+//            std::cout << "Exiting Operator Console...\n";
+//            runningOperatorConsole = false;
+//            break;
+//        }1
+//
+//        // Parse and process commands
+//        size_t spacePos = command.find(' ');
+//        if (spacePos == std::string::npos) {
+//            std::cerr << "Invalid command format. Use: <AircraftID> <Command>\n";
+//            continue;
+//        }
+//
+//        std::string idStr = command.substr(0, spacePos);
+//        std::string action = command.substr(spacePos + 1);
+//
+//        try {
+//            int aircraftID = std::stoi(idStr);
+//            sendCommand(aircraftID, action); // Use the existing sendCommand method
+//        } catch (const std::exception& e) {
+//            std::cerr << "Error: Invalid Aircraft ID.\n";
+//        }
+//    }
+//}
+
+
+

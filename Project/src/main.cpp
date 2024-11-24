@@ -32,7 +32,7 @@ void setup_timer(timer_t& timerid, TimerData* timerData);
 int main() {
 
 /////////////////////////////////////////////////////////////////////////////////////////Initializing//////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+	std::cout << "\033[31mThis is red text.\033[0m" << std::endl; // Red text
     //Load file we will be reading from for airplanes
     const std::string filename = "/data/var/tmp/example.txt";
 
@@ -133,6 +133,15 @@ int main() {
     setup_timer(global_timer, &timerData);
 
 
+
+
+
+
+
+
+
+
+
 ////////////////////////////////////////////////////////////////////////////////////Remaining ATC Set Up////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //Initializing radar
     radar Radar(numofPlanes);
@@ -143,18 +152,52 @@ int main() {
     system.startSystemThread();
     system.startComms();
     OperatorConsole console;
-    console.sendCommand(1, "STOP");
+//    console.startOperatorConsoleThread();
+
+    std::string command;
+        while (true) {
+            std::cout << ">> "; // Prompt for input
+            std::getline(std::cin, command);
+
+            // Handle "exit" command
+            if (command == "exit") {
+                std::cout << "Shutting down the system...\n";
+                break;
+            }
+
+            // Parse the command
+            size_t spacePos = command.find(' ');
+            if (spacePos == std::string::npos) {
+                std::cerr << "Invalid command format. Use: <AircraftID> <Command>\n";
+                continue;
+            }
+
+            // Extract Aircraft ID and Command
+            std::string idStr = command.substr(0, spacePos);
+            std::string action = command.substr(spacePos + 1);
+
+            try {
+                int aircraftID = std::stoi(idStr); // Convert Aircraft ID to an integer
+                console.sendCommand(aircraftID, action); // Send the command
+            } catch (const std::exception& e) {
+                std::cerr << "Error: Invalid Aircraft ID. Please enter a valid number.\n";
+            }
+        }
+
 
     //Joining all the threads into the main thread
     pthread_join(Radar.getRadarThread(), nullptr);
     pthread_join(system.getSystemThread(), nullptr);
-    //pthread_join(system.getComThread(), nullptr);
+    pthread_join(system.getComThread(), nullptr);
+    pthread_join(console.getconsoleThread(), nullptr);
   //  console.sendCommand(1, "STOP");
 
     for (int i = 0; i < numofPlanes; ++i) {
         pthread_join(airplane_threads[i], nullptr);
     }
 
+
+//
 ///////////////////////////////////////////////////////////////////////////////////////////////Clean Up///////////////////////////////////////////////////////////////////////////////////////////////////////////////
     munmap(shared_data, sizeof(airplane) * numofPlanes);
     shm_unlink("/airplane_data");
