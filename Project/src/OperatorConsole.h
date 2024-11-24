@@ -11,6 +11,10 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <semaphore.h>
+#include <cstring>
+#include <unistd.h>
+#include <sys/dispatch.h>
+#include <thread>
 
 #include "airplane.h"
 
@@ -24,20 +28,18 @@ public:
 	virtual ~OperatorConsole();
 
 
+	void startOperatorConsoleThread();
 	// Function that sends a command to aircraft (to request airplane to change its course)
-//	void sendCommand(int planeID, int newSpeedX, int newSpeedY, int newSpeedZ, int newX, int newY, int newZ);
+
+
+	void sendCommand(int aircraftID, const std::string& command);
 
 
 private:
-	int shm_fd;
-	int numofPlanes;
 
-	airplane* shared_data;//THIS is pointer to shared memory for all the airplanes
 
-	bool running;
+	bool runningOperatorConsole;
 
-	//
-	sem_t* console_semaphore;  // Semaphore for synchronizing operations
 
 
 };
