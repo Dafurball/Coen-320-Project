@@ -4,6 +4,8 @@
 #include <sstream>
 #include <stdexcept>
 #include <cstring>
+#include "ResourceProtection.h"
+
 
 planeManager::planeManager(const std::string& filename)
     : filename(filename), numOfPlanes(0), planes(nullptr), planeThreads(nullptr), sharedData(nullptr), sharedFd(-1) {}
@@ -104,11 +106,17 @@ void planeManager::initialize() {
     }
 
     int planeManager::checkIds(int id){
+		pthread_rwlock_rdlock(&rwlock);
+
     	for (int i = 0; i < numOfPlanes; i++){
+
     		if (id == sharedData[i].get_id()){
+    			pthread_rwlock_unlock(&rwlock);
+
     			return 1;
     		}
     	}
+		pthread_rwlock_unlock(&rwlock);
 
     	return 0;
     }

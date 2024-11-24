@@ -15,6 +15,7 @@
 #include <thread>
 
 #include "airplane.h"
+#include "planeManager.h"
 
 
 
@@ -22,7 +23,7 @@
 class OperatorConsole {
 
 public:
-	OperatorConsole();
+	OperatorConsole(planeManager & );
 	virtual ~OperatorConsole();
 
 
@@ -36,6 +37,7 @@ public:
 
 
 private:
+	planeManager * manager;
 
 	pthread_t consoleThread;
 	// Flag to control the running state of the thread
