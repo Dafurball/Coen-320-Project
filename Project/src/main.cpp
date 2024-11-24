@@ -54,11 +54,6 @@ int main() {
 
 /////////////////////////////////////////////////////////////////////////////////////Dynamic Array Setup/////////////////////////////////////////////////////////////////////////////////////////////////////////
     std::ifstream inputFile(filename);
-    if (!inputFile) {
-        std::cerr << "Error opening file: " << filename << std::endl;
-        return 1;
-    }
-
 
     //Count of total number of planes currently in airspace vs scheduling to be arriving in airspace.  Used for dynamic array creation
     while (std::getline(inputFile, line)) {
@@ -105,23 +100,13 @@ int main() {
 /////////////////////////////////////////////////////////////////////////////////////Memory Mapping Set up//////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //Creating shared memory for airplane data
     int shared_fd = shm_open("/airplane_data", O_CREAT | O_RDWR, 0666);
-    if (shared_fd == -1) {
-        perror("shm_open failed");
-        return 1;
-    }
+
 
     //Resize shared memory to fit number of planes in airspace
-    if (ftruncate(shared_fd, sizeof(airplane) * numofPlanes) == -1) {
-        perror("ftruncate failed");
-        return 1;
-    }
+    ftruncate(shared_fd, sizeof(airplane) * numofPlanes);
 
     //Memory map the shared memory
     shared_data = static_cast<airplane*>(mmap(nullptr, sizeof(airplane) * numofPlanes, PROT_READ | PROT_WRITE, MAP_SHARED, shared_fd, 0));
-    if (shared_data == MAP_FAILED) {
-        perror("mmap failed");
-        return 1;
-    }
 
     //Copy airplanes in airspace data to shared memory
     for (int i = 0; i < numofPlanes; ++i) {
@@ -167,8 +152,12 @@ int main() {
 ///////////////////////////////////////////////////////////////////////////////////////////////Clean Up///////////////////////////////////////////////////////////////////////////////////////////////////////////////
     munmap(shared_data, sizeof(airplane) * numofPlanes);
     shm_unlink("/airplane_data");
+
     delete[] airplanes;
     delete[] airplane_threads;
+    delete[] incoming;
+
+    cleanupSharedResources();
 
     return 0;
 }

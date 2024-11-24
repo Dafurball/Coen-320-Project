@@ -46,7 +46,7 @@ radar::radar(int numPlanes): numofPlanes(numPlanes), running(false) {
 	//Creating shared memory for airplane data
     shared_fd = shm_open("/airplane_data", O_CREAT | O_RDWR, 0666);
     if (shared_fd == -1) {
-        perror("shm_open failed");
+        perror("Error opening shared memory for Radar");
         return;
     }
 
@@ -59,7 +59,7 @@ radar::radar(int numPlanes): numofPlanes(numPlanes), running(false) {
     //Memory mapping, this will be by the size of each airplane object multiplied by the number of airplane objects created
     shared_data = (airplane*)mmap(0, sizeof(airplane) * numofPlanes, PROT_READ | PROT_WRITE, MAP_SHARED, shared_fd, 0);
     if (shared_data == MAP_FAILED) {
-        perror("mmap failed");
+        perror("Error mapping shared memory in Radar");
     }
 
 

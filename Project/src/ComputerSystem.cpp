@@ -27,7 +27,7 @@ ComputerSystem::ComputerSystem(int numPlanes): numofPlanes(numPlanes), running(f
 
     //Truncate the shared memory to the correct size (big errors if not included I found out lol)
     if (ftruncate(shm_fd, sizeof(airplane) * numofPlanes) == -1) {
-        perror("ftruncate failed");
+        perror("truncate failed");
         return;
     }
 

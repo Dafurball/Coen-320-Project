@@ -19,5 +19,7 @@ extern sem_t collision_semaphore;
 
 void initializeResourceProtection(int);
 
+void cleanupSharedResources();
+
 
 #endif /* SRC_RESOURCEPROTECTION_H_ */
