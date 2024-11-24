@@ -1,9 +1,4 @@
-/*
- * ComputerSystem.h
- *
- *  Created on: Nov. 14, 2024
- *      Author: dafur
- */
+
 
 #ifndef SRC_COMPUTERSYSTEM_H_
 #define SRC_COMPUTERSYSTEM_H_
@@ -21,6 +16,16 @@
 #include "radar.h"
 #include "airplane.h"
 
+//Valeriia
+//Struct Message
+//To send message to Operator Console in case of collision
+struct Message {
+    int planeID;      // ID of the plane
+    char alert[256];  // Alert message
+};
+
+
+
 class ComputerSystem {
 public:
 	ComputerSystem(int numPlanes);
@@ -29,6 +34,10 @@ public:
 	pthread_t getSystemThread() const;
 	void collisionTest();
 
+	//Valeriia
+	//notify operator Console that there is collision
+	//the function should be invoked in collisionTest() when there is collision
+//	void emitAlert(int planeID, const char* message);
 
 
 private:

@@ -41,12 +41,22 @@ ComputerSystem::ComputerSystem(int numPlanes): numofPlanes(numPlanes), running(f
     }
 
 
-
-
+    //Valeriia***************************************************
+    // Create a communication channel for IPC between Computer System and Operator Console
+    // Create a communication channel
+//        channelID = ChannelCreate(0);
+//        if (channelID == -1) {
+//            cerr << "Error creating channel for ComputerSystem" << endl;
+//            return;
+//        }
+//
+//        cout << "ComputerSystem: Channel created with ID: " << channelID << endl;
 }
 
 ComputerSystem::~ComputerSystem() {
-	// TODO Auto-generated destructor stub
+
+
+
 }
 
 void ComputerSystem::startSystemThread() {
@@ -109,11 +119,27 @@ void ComputerSystem::collisionTest() {
                 std::cout << "Collision detected between plane " << shared_data[i].get_id()
                           << " and plane " << shared_data[j].get_id()
                           << " will occur within " << delta << " second(s)!" << std::endl;
+
+
+
+
+
             }
 
             pthread_rwlock_unlock(&rwlock);
         }
     }
 }
+//****************************************************************************
+//Valeriia
+// Emit an alert to notify the operator
+void ComputerSystem::emitAlert(int planeID, const char* message) {
+    Message msg;
+    msg.planeID = planeID;
+    strncpy(msg.alert, message, sizeof(msg.alert) - 1);
 
+    // Send the alert to the operator console
+    cout << "ComputerSystem: Sending alert for Plane " << planeID << endl;
+    MsgSend(channelID, &msg, sizeof(msg), nullptr, 0);
+}
 
