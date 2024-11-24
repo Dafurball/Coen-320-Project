@@ -10,8 +10,8 @@
 #include "airplane.h"
 #include "radar.h"
 #include "ComputerSystem.h"
+#include "OperatorConsole.h"
 #include "ResourceProtection.h"
-#include "Timer.h"
 
 
 ///////////////////////////////////////////////////////////////////////////////////////Timer Structure and Methods for Set Up//////////////////////////////////////////////////////////////////////////////////
@@ -141,10 +141,16 @@ int main() {
     //Initializing computerSystem
     ComputerSystem system(numofPlanes);
     system.startSystemThread();
+    system.startComms();
+    OperatorConsole console;
+    console.sendCommand(1, "STOP");
 
     //Joining all the threads into the main thread
     pthread_join(Radar.getRadarThread(), nullptr);
     pthread_join(system.getSystemThread(), nullptr);
+    //pthread_join(system.getComThread(), nullptr);
+  //  console.sendCommand(1, "STOP");
+
     for (int i = 0; i < numofPlanes; ++i) {
         pthread_join(airplane_threads[i], nullptr);
     }

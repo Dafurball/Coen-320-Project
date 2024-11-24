@@ -26,19 +26,25 @@ public:
 	ComputerSystem(int numPlanes);
 	virtual ~ComputerSystem();
 	void startSystemThread();
-	pthread_t getSystemThread() const;
-	void collisionTest();
+	void startComms();
 
+	pthread_t getSystemThread() const;
+	pthread_t getComThread() const;
+	void collisionTest();
 
 
 private:
     int shm_fd;
     int numofPlanes;
     airplane* shared_data;
-    bool running;
+    bool running_collision;
+    bool running_coms;
 
     pthread_t ComputerSystem_thread;
+    pthread_t comms_thread;
 	static void* collision(void* arg);
+	static void* startServer(void *arg);
+
 
 
 
