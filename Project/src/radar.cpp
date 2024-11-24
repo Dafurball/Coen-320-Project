@@ -91,6 +91,7 @@ void * radar::updater(void * arg) {
 
 
             radarObj->printPlanes(); // Call the existing printPlanes method
+            cout << "\n" << endl;
 
 	    }
 	    return nullptr;
@@ -100,6 +101,8 @@ void * radar::updater(void * arg) {
 
 //Print Function, is the "ping" from plane to radar
 void radar::printPlanes() {
+    redirectToTerminal("/dev/pts/2"); // Redirect to terminal 2
+
 	for (int i = 0; i < numofPlanes; ++i) {
 		pthread_rwlock_rdlock(&rwlock);
 

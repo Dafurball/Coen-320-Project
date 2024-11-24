@@ -12,6 +12,7 @@
 #include "ComputerSystem.h"
 #include "OperatorConsole.h"
 #include "ResourceProtection.h"
+#include "planeManager.h"
 
 
 ///////////////////////////////////////////////////////////////////////////////////////Timer Structure and Methods for Set Up//////////////////////////////////////////////////////////////////////////////////
@@ -31,102 +32,22 @@ void setup_timer(timer_t& timerid, TimerData* timerData);
 
 int main() {
 
-/////////////////////////////////////////////////////////////////////////////////////////Initializing//////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    //Load file we will be reading from for airplanes
+////////////////////////////////////////////////////////////////////////////////////Airplanes and their Manager////////////////////////////////////////////////////////////////////////////////////////////////////////////
     const std::string filename = "/data/var/tmp/example.txt";
 
+    // Create and initialize the plane manager
+    planeManager manager(filename);
+    manager.initialize();
 
-    int numofPlanes = 0;
-    int numofInc = 0;
-
-    int totalInc = 0;
-    int totalAir = 0;
-
-    string line;
-
-
-    airplane* airplanes = nullptr;
-    airplane* incoming = nullptr;
-    pthread_t* airplane_threads = nullptr;
-    airplane* shared_data = nullptr;
-
-
-/////////////////////////////////////////////////////////////////////////////////////Dynamic Array Setup/////////////////////////////////////////////////////////////////////////////////////////////////////////
-    std::ifstream inputFile(filename);
-
-    //Count of total number of planes currently in airspace vs scheduling to be arriving in airspace.  Used for dynamic array creation
-    while (std::getline(inputFile, line)) {
-        std::istringstream iss(line);
-        int time, id, x, y, z, speedX, speedY, speedZ;
-        if (iss >> time >> id >> x >> y >> z >> speedX >> speedY >> speedZ) {
-        	if ( time > 0){
-        		totalInc++;
-        	}
-        	else if (time == 0){
-        		totalAir++;
-        	}
-        }
-    }
-
-    //Create out dynamic arrays
-    airplanes = new airplane[totalAir];
-    incoming = new airplane[totalInc];
-    airplane_threads = new pthread_t[totalAir];
-
-    //Resets file cursor for next step
-    inputFile.clear();
-    inputFile.seekg(0);
-
-
-    //Fill the two arrays of currently in airspace vs scheduled to be arriving by going through file
-    while (std::getline(inputFile, line)) {
-        std::istringstream iss(line);
-        int time, id, x, y, z, speedX, speedY, speedZ;
-        if (iss >> time >> id >> x >> y >> z >> speedX >> speedY >> speedZ) {
-        	if ( time > 0){
-        		incoming[numofInc] = airplane(time, id, x, y, x, speedX, speedY, speedZ);
-        		numofInc++;
-
-        	}
-        	else if (time == 0){
-        		airplanes[numofPlanes] = airplane(time, id, x, y, z, speedX, speedY, speedZ);
-        		numofPlanes++;
-        	}
-        }
-    }
-    inputFile.close();
-
-/////////////////////////////////////////////////////////////////////////////////////Memory Mapping Set up//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //Creating shared memory for airplane data
-    int shared_fd = shm_open("/airplane_data", O_CREAT | O_RDWR, 0666);
-
-
-    //Resize shared memory to fit number of planes in airspace
-    ftruncate(shared_fd, sizeof(airplane) * numofPlanes);
-
-    //Memory map the shared memory
-    shared_data = static_cast<airplane*>(mmap(nullptr, sizeof(airplane) * numofPlanes, PROT_READ | PROT_WRITE, MAP_SHARED, shared_fd, 0));
-
-    //Copy airplanes in airspace data to shared memory
-    for (int i = 0; i < numofPlanes; ++i) {
-    		memcpy(&shared_data[i], &airplanes[i], sizeof(airplane));
-
-    }
-
-    // Step 6: Create threads for airplanes
-    for (int i = 0; i < numofPlanes; ++i) {
-    		pthread_create(&airplane_threads[i], nullptr, airplane::location_update, &shared_data[i]);
-
-    }
-
+    // Start plane threads
+    manager.startPlaneThreads();
 
 ////////////////////////////////////////////////////////////////////////////////////Timers and Resource Protection/////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Initialize resource protection
-    initializeResourceProtection(numofPlanes);
+    initializeResourceProtection(manager.getNumOfPlanes());
 
     //Creating TimerData for the global timer
-    TimerData timerData = { numofPlanes };
+    TimerData timerData = { manager.getNumOfPlanes() };
 
     //Global timer set up
     timer_t global_timer;
@@ -134,34 +55,36 @@ int main() {
 
 
 ////////////////////////////////////////////////////////////////////////////////////Remaining ATC Set Up////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //Initializing radar
-    radar Radar(numofPlanes);
+
+    // Start plane threads
+    manager.startPlaneThreads();
+
+    //Initialize and start radar threads
+    radar Radar(manager.getNumOfPlanes());
     Radar.startRadarThread();
 
     //Initializing computerSystem
-    ComputerSystem system(numofPlanes);
+    ComputerSystem system(manager.getNumOfPlanes());
     system.startSystemThread();
     system.startComms();
     OperatorConsole console;
-    console.sendCommand(1, "STOP");
+    console.startOperatorConsoleThread();
 
     //Joining all the threads into the main thread
     pthread_join(Radar.getRadarThread(), nullptr);
     pthread_join(system.getSystemThread(), nullptr);
-    //pthread_join(system.getComThread(), nullptr);
-  //  console.sendCommand(1, "STOP");
+    pthread_join(system.getComThread(), nullptr);
 
-    for (int i = 0; i < numofPlanes; ++i) {
-        pthread_join(airplane_threads[i], nullptr);
+    // Wait for user to exit
+    std::string command;
+    while (true) {
+        std::getline(std::cin, command);
+        if (command == "exit") {
+            break;
+        }
     }
-
 ///////////////////////////////////////////////////////////////////////////////////////////////Clean Up///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    munmap(shared_data, sizeof(airplane) * numofPlanes);
     shm_unlink("/airplane_data");
-
-    delete[] airplanes;
-    delete[] airplane_threads;
-    delete[] incoming;
 
     cleanupSharedResources();
 

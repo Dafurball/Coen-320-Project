@@ -1,13 +1,7 @@
 #include "OperatorConsole.h"
 #include <iostream>
-#include <iomanip>
 #include <cstring>
-#include <unistd.h>
-#include <sys/dispatch.h>
-#include <thread>
-#include <string>
-
-using namespace std;
+#include <sstream>
 
 #define CHANNEL_NAME "ComputerSystemServer"
 
@@ -16,52 +10,68 @@ typedef struct {
     char body[100];    // Content of the message (e.g., command or data)
 } msg_struct;
 
-
-
-OperatorConsole::OperatorConsole() {
-
-
-}
+OperatorConsole::OperatorConsole() : running(false) {}
 
 OperatorConsole::~OperatorConsole() {
-	// TODO Auto-generated destructor stub
+    stopOperatorConsoleThread();
 }
 
-void OperatorConsole::sendCommand(int aircraftID, const std::string& command){
+void OperatorConsole::startOperatorConsoleThread() {
+    running = true;
+    input_thread = std::thread(&OperatorConsole::inputLoop, this);
+}
 
-	//1.
-	// Open the channel to connect to the Computer System (server)
-	    int coid = name_open(CHANNEL_NAME, 0);
-	    if (coid == -1) {
-	        cerr << "Operator " << " failed to connect to channel: " << CHANNEL_NAME << endl;
-	        return;
-	    }
+void OperatorConsole::stopOperatorConsoleThread() {
+    running = false;
+    if (input_thread.joinable()) {
+        input_thread.join();
+    }
+}
 
-	    cout << "Operator " <<  " connected to server on channel: " << CHANNEL_NAME << endl;
+void OperatorConsole::inputLoop() {
+    while (running) {
+        std::string input;
+        std::cout << "Enter command (format: <AircraftID> <Command>): ";
+        std::getline(std::cin, input);
 
-	    // 2. Prepare the message structure
-	       msg_struct msg;
-	       msg.id = aircraftID;
-	       strncpy(msg.body, command.c_str(), sizeof(msg.body) - 1);
-	       msg.body[sizeof(msg.body) - 1] = '\0'; // Ensure null termination
+        if (input.empty()) {
+            continue;
+        }
 
-	       std::cout << "OperatorConsole: Sending command to ComputerSystem: " << msg.body << std::endl;
+        std::istringstream iss(input);
+        int aircraftID;
+        std::string command;
 
-	       // 3. Structure for the server's reply
-	       msg_struct reply;
+        if (!(iss >> aircraftID >> command)) {
+            std::cerr << "Invalid input format. Use: <AircraftID> <Command>" << std::endl;
+            continue;
+        }
 
-	       // 4. Send the message to the server and wait for a reply
-	       int status = MsgSend(coid, &msg, sizeof(msg), &reply, sizeof(reply));
-	       if (status == -1) {
-	           perror("MsgSend");
-	           name_close(coid);
-	           return;
-	       }
+        sendCommand(aircraftID, command);
+    }
+}
 
-	       // 5. Display the server's reply
-	       std::cout << "OperatorConsole: Received reply from ComputerSystem: " << reply.body << std::endl;
+void OperatorConsole::sendCommand(int aircraftID, const std::string& command) {
+    int coid = name_open(CHANNEL_NAME, 0);
+    if (coid == -1) {
+        std::cerr << "Operator failed to connect to channel: " << CHANNEL_NAME << std::endl;
+        return;
+    }
 
-	       // 6. Close the connection to the server
-	       name_close(coid);
-	       return;
+    msg_struct msg;
+    msg.id = aircraftID;
+    strncpy(msg.body, command.c_str(), sizeof(msg.body) - 1);
+    msg.body[sizeof(msg.body) - 1] = '\0';
+
+    msg_struct reply;
+
+    int status = MsgSend(coid, &msg, sizeof(msg), &reply, sizeof(reply));
+    if (status == -1) {
+        perror("MsgSend failed");
+        name_close(coid);
+        return;
+    }
+
+    std::cout << "OperatorConsole: Received reply from ComputerSystem: " << reply.body << std::endl;
+    name_close(coid);
 }

@@ -21,5 +21,8 @@ void initializeResourceProtection(int);
 
 void cleanupSharedResources();
 
+void redirectToTerminal(const char* terminal);
+
+
 
 #endif /* SRC_RESOURCEPROTECTION_H_ */

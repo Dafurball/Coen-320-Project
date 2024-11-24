@@ -25,6 +25,7 @@ public:
 
 	int get_speed();
 
+
 	void new_location();
     static void* location_update(void* arg);
 
@@ -39,6 +40,8 @@ private:
 	int x,y,z;
 	int SpeedX,SpeedY,SpeedZ;
 	int delta = 1;
+
+
 
 };
 
