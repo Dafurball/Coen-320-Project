@@ -23,10 +23,7 @@ public:
     radar(int);
 	virtual ~radar();
 
-	void loadPlanes(const string& filename);
 	void printPlanes();
-	int getnumofPlanes();
-	void stopAirplaneThreads();
 	void startRadarThread();
 	pthread_t getRadarThread() const;
 	void stopRadarThread();
@@ -34,15 +31,11 @@ public:
 
 
 private:
-	//airplane* airplanes;
 	int numofPlanes;
     pthread_t radar_thread;
 
     int shared_fd;
     airplane* shared_data;
-
-
-
 
     bool running;
 

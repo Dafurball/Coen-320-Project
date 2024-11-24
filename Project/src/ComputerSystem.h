@@ -28,7 +28,6 @@ public:
 	void startSystemThread();
 	pthread_t getSystemThread() const;
 	void collisionTest();
-	void printPlanes();
 
 
 
@@ -36,9 +35,8 @@ private:
     int shm_fd;
     int numofPlanes;
     airplane* shared_data;
-
-
     bool running;
+
     pthread_t ComputerSystem_thread;
 	static void* collision(void* arg);
 

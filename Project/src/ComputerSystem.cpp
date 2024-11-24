@@ -54,6 +54,7 @@ void ComputerSystem::startSystemThread() {
     pthread_create(&ComputerSystem_thread, nullptr, collision, this);
 }
 
+//Used to join computerSystem pthread in main
 pthread_t ComputerSystem::getSystemThread() const {
     return ComputerSystem_thread;
 }
@@ -66,7 +67,6 @@ void * ComputerSystem::collision(void * arg) {
 
 	    	sem_wait(&collision_semaphore);
 
-	    //	cout << "test" << endl;
             system->collisionTest();
 
 
@@ -84,10 +84,7 @@ void ComputerSystem::collisionTest() {
         for (int j = i + 1; j < numofPlanes; j++) {
             pthread_rwlock_rdlock(&rwlock);
 
-            // Use global_time to calculate the future positions consistently
-           // int delta_i = global_time - shared_data[i].get_time();
-           // int delta_j = global_time - shared_data[j].get_time();
-
+            //How far into the future do we check for collisions, need to find a way to change/set it during runtime
             int delta = 1;
 
             int future_x_of_i = shared_data[i].get_x() + shared_data[i].get_speedX() * delta;
@@ -120,21 +117,3 @@ void ComputerSystem::collisionTest() {
 }
 
 
-//Print function used to test if memory mapping was correct, was just for testing purposes (hence why no critical section protection
-void ComputerSystem::printPlanes() {
-    if (shared_data == MAP_FAILED) {
-        cerr << "Shared memory was not mapped correctly" << endl;
-        return;
-    }
-
-    if (numofPlanes <= 0) {
-        cerr << "No planes were on the file" << endl;
-        return;
-    }
-
-	for (int i = 0; i < numofPlanes; ++i) {
-			cout<< "ID: " << shared_data[i].get_id() << " Time: " << shared_data[i].get_time() << " Position: (" << shared_data[i].get_x() << ", " << shared_data[i].get_y() << ", " << shared_data[i].get_z() << ")"
-					  << " Speed: (" << shared_data[i].get_speedX() << ", " << shared_data[i].get_speedY() << ", " << shared_data[i].get_speedZ() << ")"
-					  << endl;
-		}
-}

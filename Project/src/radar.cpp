@@ -65,13 +65,14 @@ radar::radar(int numPlanes): numofPlanes(numPlanes), running(false) {
 
 }
 
-//Start the radar thread (to be done in main.cpp unless I can find a better solution)...
+//Start the radar thread, to be done in main.cpp
 void radar::startRadarThread() {
     running = true;
     pthread_create(&radar_thread, nullptr, radar::updater, this);
   //  pthread_join(radar_thread, nullptr);
 }
 
+//Used to join radar thread to main
 pthread_t radar::getRadarThread() const {
     return radar_thread;
 }
@@ -83,7 +84,7 @@ void radar::stopRadarThread() {
     }
 }
 
-// Print all loaded airplanes (for testing)
+//Function that radar pthread continuously calls
 void * radar::updater(void * arg) {
 	radar* radarObj = static_cast<radar*>(arg);
 	    while (radarObj->running) {
@@ -98,39 +99,18 @@ void * radar::updater(void * arg) {
 
 
 
-//Print Function, used for testing
+//Print Function, is the "ping" from plane to radar
 void radar::printPlanes() {
 	for (int i = 0; i < numofPlanes; ++i) {
+		pthread_rwlock_rdlock(&rwlock);
 
-//////////////////////////////////////////Reader Lock///////////////////////////////////////////////
-	  /*  pthread_mutex_lock(&reader_mutex);
-	    numofReaders++;
-	    if (numofReaders == 1) {  // First reader turns on the light...
-	        sem_wait(&shared_access);
-	    }
-	    pthread_mutex_unlock(&reader_mutex);*/
-	pthread_rwlock_rdlock(&rwlock);
-
-		//if (shared_data[i].get_time() < global_time){
-
-	//	}
-
-		//else{
-////////////////////////////////////////Critical Section///////////////////////////////////////////
         std::lock_guard<std::mutex> lock(cout_mutex);
 		cout<< "ID: " << shared_data[i].get_id() << " Time: " << shared_data[i].get_time() << " Position: (" << shared_data[i].get_x() << ", " << shared_data[i].get_y() << ", " << shared_data[i].get_z() << ")"
 				  << " Speed: (" << shared_data[i].get_speedX() << ", " << shared_data[i].get_speedY() << ", " << shared_data[i].get_speedZ() << ")"
 				  << endl << flush;
 
-//////////////////////////////////////////Reader Unlock//////////////////////////////////////////////
 		pthread_rwlock_unlock(&rwlock);
-	//	}
-		/*pthread_mutex_lock(&reader_mutex);
-		numofReaders--;
-		if (numofReaders == 0) {  // ...Last reader shuts off the light!
-			sem_post(&shared_access);
-		}
-		pthread_mutex_unlock(&reader_mutex);*/
+
 	}
 }
 
