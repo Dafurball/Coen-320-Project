@@ -67,22 +67,46 @@ int main() {
     ComputerSystem system(manager.getNumOfPlanes());
     system.startSystemThread();
     system.startComms();
+
+    //Initializing Operator
     OperatorConsole console;
-    console.startOperatorConsoleThread();
+    std::string command;
+            while (true) {
+                std::cout << ">> "; // Prompt for input
+                std::getline(std::cin, command);
+
+                // Handle "exit" command
+                if (command == "exit") {
+                    std::cout << "Shutting down the system...\n";
+                    break;
+                }
+
+                // Parse the command
+                size_t spacePos = command.find(' ');
+                if (spacePos == std::string::npos) {
+                    std::cerr << "Invalid command format. Use: <AircraftID> <Command>\n";
+                    continue;
+                }
+
+                // Extract Aircraft ID and Command
+                std::string idStr = command.substr(0, spacePos);
+                std::string action = command.substr(spacePos + 1);
+
+                try {
+                    int aircraftID = std::stoi(idStr); // Convert Aircraft ID to an integer
+                    console.sendCommand(aircraftID, action); // Send the command
+                } catch (const std::exception& e) {
+                    std::cerr << "Error: Invalid Aircraft ID. Please enter a valid number.\n";
+                }
+            }
+    //console.startOperatorConsoleThread();
 
     //Joining all the threads into the main thread
     pthread_join(Radar.getRadarThread(), nullptr);
     pthread_join(system.getSystemThread(), nullptr);
     pthread_join(system.getComThread(), nullptr);
 
-    // Wait for user to exit
-    std::string command;
-    while (true) {
-        std::getline(std::cin, command);
-        if (command == "exit") {
-            break;
-        }
-    }
+
 ///////////////////////////////////////////////////////////////////////////////////////////////Clean Up///////////////////////////////////////////////////////////////////////////////////////////////////////////////
     shm_unlink("/airplane_data");
 

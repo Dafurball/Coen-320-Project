@@ -23,6 +23,8 @@ public:
     int getNumOfPlanes() const;
     airplane* getSharedData() const;
 
+    int checkIds(int);
+
 private:
     const std::string filename;
     int numOfPlanes;

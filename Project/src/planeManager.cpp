@@ -102,3 +102,13 @@ void planeManager::initialize() {
     airplane* planeManager::getSharedData() const {
         return sharedData;
     }
+
+    int planeManager::checkIds(int id){
+    	for (int i = 0; i < numOfPlanes; i++){
+    		if (id == sharedData[i].get_id()){
+    			return 1;
+    		}
+    	}
+
+    	return 0;
+    }
