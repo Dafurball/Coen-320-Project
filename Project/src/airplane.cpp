@@ -1,4 +1,3 @@
-
 #include <iostream>
 #include <cmath>
 #include <unistd.h>
@@ -8,6 +7,7 @@
 
 #include "airplane.h"
 #include "ResourceProtection.h"
+#include "Timer.h"
 
 using namespace std;
 
@@ -61,18 +61,20 @@ int airplane::get_speedZ(){
 
 //start routine for each pthread of type airplane created
 //I now see the power of typecasting, I didnt have to change anything when changing implementation from airplane objects to shared memory!
-
 void* airplane::location_update(void *arg){
 
 	//typecasting the void argument passed by pthread_create into one of type airplane
     airplane* plane = static_cast<airplane*>(arg);
 
     while (true) {
+    	sem_wait(&airplane_semaphore);
 
     	plane->new_location();
+    	sleep(1);//plane->print();
+
+
 
     	//time for when location is updated
-        sleep(1);
     }
     return nullptr;
 
@@ -80,19 +82,21 @@ void* airplane::location_update(void *arg){
 
 //Method that updates an airplane's location based on their current coordinates plus their speed multiplied by the delta (which is 1 since we update every second)
 void airplane::new_location(){
-    int delta = 1;
 
-    pthread_mutex_lock(&reader_mutex);
-    sem_wait(&shared_access);
+    //pthread_mutex_lock(&reader_mutex);
+    //sem_wait(&shared_access);
+	pthread_rwlock_wrlock(&rwlock);
     x = x + SpeedX * delta;
     y = y + SpeedY * delta;
     z = z + SpeedZ * delta;
 
     time = time + delta;
-    pthread_mutex_unlock(&reader_mutex);
+	pthread_rwlock_unlock(&rwlock);
 
-    sem_post(&shared_access);
-    pthread_mutex_unlock(&reader_mutex);
+
+
+  //  sem_post(&shared_access);
+    //pthread_mutex_unlock(&reader_mutex);
 
     //Print was used to test functionality of airplane class
   //  print();
@@ -103,5 +107,7 @@ void airplane::new_location(){
 void airplane::print(){
 	double speed = sqrt(SpeedX*SpeedX + SpeedY*SpeedY + SpeedZ*SpeedZ);
 
-	cout << "Plane ID: " << id << " at time "<< time << " seconds has coordinates (" << x << "," << y << "," << z << ") with a speed of "  << speed << endl;
+    std::lock_guard<std::mutex> lock(cout_mutex);
+
+	cout << "The Test from airplane: Plane ID: " << id << " at time "<< time << " seconds has coordinates (" << x << "," << y << "," << z << ") with a speed of "  << speed << endl;
 }

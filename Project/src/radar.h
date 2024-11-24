@@ -20,36 +20,24 @@ using namespace std;
 class radar {
 public:
 	radar();
-    radar(const string& filename);
+    radar(int);
 	virtual ~radar();
 
-	void loadPlanes(const string& filename);
-	//void setupSharedMemory();
-//	void copyDataToSharedMemory();
 	void printPlanes();
-	//airplane* getAirplanes();
-	int getnumofPlanes();
-
-	//void startAirplaneThreads();
-	void stopAirplaneThreads();
 	void startRadarThread();
 	pthread_t getRadarThread() const;
 	void stopRadarThread();
-
 	static void* updater(void* arg);
 
 
 private:
-	airplane* airplanes;
 	int numofPlanes;
+    pthread_t radar_thread;
+
     int shared_fd;
     airplane* shared_data;
 
-    pthread_t *airplane_threads;
-    pthread_t radar_thread;
-
     bool running;
-    mutex mtx;
 
 };
 

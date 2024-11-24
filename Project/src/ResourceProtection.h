@@ -9,12 +9,17 @@
 
 using namespace std;
 
-extern sem_t shared_access;
 extern mutex cout_mutex;
-extern pthread_mutex_t reader_mutex;
-extern int numofReaders;
 
-void initializeResourceProtection();
+extern pthread_rwlock_t rwlock;
+
+extern sem_t airplane_semaphore;
+extern sem_t radar_semaphore;
+extern sem_t collision_semaphore;
+
+void initializeResourceProtection(int);
+
+void cleanupSharedResources();
 
 
 #endif /* SRC_RESOURCEPROTECTION_H_ */

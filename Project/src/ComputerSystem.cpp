@@ -27,7 +27,7 @@ ComputerSystem::ComputerSystem(int numPlanes): numofPlanes(numPlanes), running(f
 
     //Truncate the shared memory to the correct size (big errors if not included I found out lol)
     if (ftruncate(shm_fd, sizeof(airplane) * numofPlanes) == -1) {
-        perror("ftruncate failed");
+        perror("truncate failed");
         return;
     }
 
@@ -52,23 +52,23 @@ ComputerSystem::~ComputerSystem() {
 void ComputerSystem::startSystemThread() {
     running = true;
     pthread_create(&ComputerSystem_thread, nullptr, collision, this);
-   // pthread_join(ComputerSystem_thread, nullptr);
 }
 
+//Used to join computerSystem pthread in main
 pthread_t ComputerSystem::getSystemThread() const {
     return ComputerSystem_thread;
 }
+
 
 //the method our ComputerSystem thread calls repeatedly
 void * ComputerSystem::collision(void * arg) {
 	ComputerSystem* system = static_cast<ComputerSystem*>(arg);
 	    while (system->running) {
 
-
+	    	sem_wait(&collision_semaphore);
 
             system->collisionTest();
 
-            sleep(1);
 
 
 	    }
@@ -76,84 +76,44 @@ void * ComputerSystem::collision(void * arg) {
 }
 
 //Checks collisions, uses nifty trick for calculating distance without having to use sqrt function
-void ComputerSystem::collisionTest(){
-int n = 1;	//how many seconds in the future we check
+void ComputerSystem::collisionTest() {
+    const int min_horizontal = 9000000; // 3000^2
+    const int min_vertical = 1000000;   // 1000^2
 
-const int min_horizontal = 9000000; // 3000^2
-const int min_vertical = 1000000;	//1000^2
+    for (int i = 0; i < numofPlanes; i++) {
+        for (int j = i + 1; j < numofPlanes; j++) {
+            pthread_rwlock_rdlock(&rwlock);
 
-	for (int i = 0; i < numofPlanes; i++){
+            //How far into the future do we check for collisions, need to find a way to change/set it during runtime
+            int delta = 1;
 
-		for (int j = i + 1; j < numofPlanes; j++){
+            int future_x_of_i = shared_data[i].get_x() + shared_data[i].get_speedX() * delta;
+            int future_y_of_i = shared_data[i].get_y() + shared_data[i].get_speedY() * delta;
+            int future_z_of_i = shared_data[i].get_z() + shared_data[i].get_speedZ() * delta;
 
-//////////////////////////////////////////Reader Lock///////////////////////////////////////////////
-		    pthread_mutex_lock(&reader_mutex);
-		    numofReaders++;
-		    if (numofReaders == 1) {  //First reader turns on the light...
-		        sem_wait(&shared_access);
-		    }
-		    pthread_mutex_unlock(&reader_mutex);
+            int future_x_of_j = shared_data[j].get_x() + shared_data[j].get_speedX() * delta;
+            int future_y_of_j = shared_data[j].get_y() + shared_data[j].get_speedY() * delta;
+            int future_z_of_j = shared_data[j].get_z() + shared_data[j].get_speedZ() * delta;
 
-/////////////////////////////////////Critical Section///////////////////////////////////////////////
-			int future_x_of_i = shared_data[i].get_x() + shared_data[i].get_speedX() * n;
-			int future_y_of_i = shared_data[i].get_y() + shared_data[i].get_speedY() * n;
-			int future_z_of_i = shared_data[i].get_z() + shared_data[i].get_speedZ() * n;
+            int check_x = future_x_of_j - future_x_of_i;
+            int check_y = future_y_of_j - future_y_of_i;
+            int check_z = future_z_of_j - future_z_of_i;
 
-			int future_x_of_j = shared_data[j].get_x() + shared_data[j].get_speedX() * n;
-			int future_y_of_j = shared_data[j].get_y() + shared_data[j].get_speedY() * n;
-			int future_z_of_j = shared_data[j].get_z() + shared_data[j].get_speedZ() * n;
+            int squared_horizontal_distance = check_x * check_x + check_y * check_y;
+            int squared_vertical_distance = check_z * check_z;
 
-//////////////////////////////////////////Reader Unlock////////////////////////////////////////////
-		/*	pthread_mutex_lock(&reader_mutex);
-		    numofReaders--;
-		    if (numofReaders == 0) {  //...Last reader turns off the light!
-		        sem_post(&shared_access);
-		    }
-		    pthread_mutex_unlock(&reader_mutex); */
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
 
-			int check_x = future_x_of_j - future_x_of_i;
-			int check_y = future_y_of_j - future_y_of_i;
-			int check_z = future_z_of_j - future_z_of_i;
+            if ((squared_horizontal_distance <= min_horizontal) && (squared_vertical_distance <= min_vertical)) {
+                std::lock_guard<std::mutex> lock(cout_mutex);
+                std::cout << "Collision detected between plane " << shared_data[i].get_id()
+                          << " and plane " << shared_data[j].get_id()
+                          << " will occur within " << delta << " second(s)!" << std::endl;
+            }
 
-			int squared_horitzontal_distance = check_x * check_x + check_y * check_y;
-			int squared_vertical_distance = check_z * check_z;
-
-			if ((squared_horitzontal_distance <= min_horizontal) && (squared_vertical_distance <= min_vertical)){
-	            std::lock_guard<std::mutex> lock(cout_mutex);
-
-				cout << "collision detected between plane " << shared_data[i].get_id() << " and plane " << shared_data[j].get_id() << " will happen between time  " << shared_data[i].get_time() << " and " << shared_data[i].get_time() + n <<"!"<< endl << flush;
-			}
-
-			pthread_mutex_lock(&reader_mutex);
-		    numofReaders--;
-		    if (numofReaders == 0) {  //...Last reader turns off the light!
-		        sem_post(&shared_access);
-		    }
-		    pthread_mutex_unlock(&reader_mutex);
-
-		}
-
-	}
-
+            pthread_rwlock_unlock(&rwlock);
+        }
+    }
 }
 
-//Print function used to test if memory mapping was correct, was just for testing purposes (hence why no critical section protection
-void ComputerSystem::printPlanes() {
-    if (shared_data == MAP_FAILED) {
-        cerr << "Shared memory was not mapped correctly" << endl;
-        return;
-    }
 
-    if (numofPlanes <= 0) {
-        cerr << "Error: No planes to work on." << endl;
-        return;
-    }
-
-	for (int i = 0; i < numofPlanes; ++i) {
-			cout<< "ID: " << shared_data[i].get_id() << " Time: " << shared_data[i].get_time() << " Position: (" << shared_data[i].get_x() << ", " << shared_data[i].get_y() << ", " << shared_data[i].get_z() << ")"
-					  << " Speed: (" << shared_data[i].get_speedX() << ", " << shared_data[i].get_speedY() << ", " << shared_data[i].get_speedZ() << ")"
-					  << endl;
-		}
-}
