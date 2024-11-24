@@ -178,25 +178,23 @@ void setup_timer(timer_t& timerid, TimerData* timerData) {
     struct sigevent sev;
     struct itimerspec its;
 
+    //Structure of out sigevent, it will be a thread that used the data passed through timerData in conjuction with the method callback "timer_callback"
     sev.sigev_notify = SIGEV_THREAD;
     sev.sigev_notify_function = timer_callback;
     sev.sigev_value.sival_ptr = timerData; // Pass the timerData to the callback
     sev.sigev_notify_attributes = nullptr;
 
-    if (timer_create(CLOCK_REALTIME, &sev, &timerid) == -1) {
-        perror("timer_create");
-        exit(1);
-    }
+    //Creating our timer, using a real time clock
+    timer_create(CLOCK_REALTIME, &sev, &timerid);
 
+    //The timer will fire one second relative to the current time, and will repeat every second
     its.it_value.tv_sec = 1;
     its.it_value.tv_nsec = 0;
     its.it_interval.tv_sec = 1;
     its.it_interval.tv_nsec = 0;
 
-    if (timer_settime(timerid, 0, &its, nullptr) == -1) {
-        perror("timer_settime");
-        exit(1);
-    }
+    //Setting up the timer
+    timer_settime(timerid, 0, &its, nullptr);
 }
 
 void timer_callback(union sigval sv) {
