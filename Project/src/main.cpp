@@ -14,6 +14,7 @@
 #include "OperatorConsole.h"
 #include "ResourceProtection.h"
 #include "planeManager.h"
+#include "CommunicationSystem.h"
 
 
 ///////////////////////////////////////////////////////////////////////////////////////Timer Structure and Methods for Set Up//////////////////////////////////////////////////////////////////////////////////
@@ -76,11 +77,21 @@ int main() {
     OperatorConsole console(manager);
     console.startOperatorConsoleThread();
 
+    CommunicationSystem communsystem(manager);
+    communsystem.startCommunicationThread();
+
+    manager.printPlane(103);
+    manager.changeSpeed(103, 100);
+   manager.changeAltitude(103, 100);
+   manager.changeDirection(103, 100, 200);
+
+
 
     //Joining all the threads into the main thread
     pthread_join(Radar.getRadarThread(), nullptr);
     pthread_join(system.getSystemThread(), nullptr);
     pthread_join(system.getComThread(), nullptr);
+    pthread_join(console.getconsoleThread(), nullptr);
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////Clean Up///////////////////////////////////////////////////////////////////////////////////////////////////////////////

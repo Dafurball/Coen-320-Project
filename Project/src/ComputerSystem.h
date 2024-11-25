@@ -24,23 +24,28 @@ public:
 	void startSystemThread();
 	void startComms();
 
+	//Thread with Communication
+	void startCommunicationThread();
 
 
 	pthread_t getSystemThread() const;
 	pthread_t getComThread() const;
+	pthread_t getToCommunication_thread() const;
+
 	void collisionTest();
 
 
-	//Thread with Communication
-	void startCommunicationThread();
+
 
 
 private:
     int shm_fd;
     int numofPlanes;
     airplane* shared_data;
+
     bool running_collision;
     bool running_coms;
+    // int delta = 1;
 
     pthread_t ComputerSystem_thread;
     pthread_t comms_thread;

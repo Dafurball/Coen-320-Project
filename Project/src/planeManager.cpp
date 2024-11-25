@@ -8,13 +8,13 @@
 
 
 planeManager::planeManager(const std::string& filename)
-    : filename(filename), numOfPlanes(0), planes(nullptr), planeThreads(nullptr), sharedData(nullptr), sharedFd(-1) {}
+    : filename(filename), numOfPlanes(0), planes(nullptr), planeThreads(nullptr), shared_data(nullptr), sharedFd(-1) {}
 
 planeManager::~planeManager() {
     stopPlaneThreads();
 
-    if (sharedData) {
-        munmap(sharedData, sizeof(airplane) * numOfPlanes);
+    if (shared_data) {
+        munmap(shared_data, sizeof(airplane) * numOfPlanes);
     }
 
     if (sharedFd != -1) {
@@ -69,21 +69,21 @@ void planeManager::initialize() {
     }
 
         // Map shared memory
-        sharedData = static_cast<airplane*>(mmap(nullptr, sizeof(airplane) * numOfPlanes,
+        shared_data = static_cast<airplane*>(mmap(nullptr, sizeof(airplane) * numOfPlanes,
                                                  PROT_READ | PROT_WRITE, MAP_SHARED, sharedFd, 0));
-        if (sharedData == MAP_FAILED) {
+        if (shared_data == MAP_FAILED) {
             throw std::runtime_error("Failed to map shared memory");
         }
 
         // Copy planes into shared memory
         for (int i = 0; i < numOfPlanes; ++i) {
-            memcpy(&sharedData[i], &planes[i], sizeof(airplane));
+            memcpy(&shared_data[i], &planes[i], sizeof(airplane));
         }
     }
 
     void planeManager::startPlaneThreads() {
         for (int i = 0; i < numOfPlanes; ++i) {
-            if (pthread_create(&planeThreads[i], nullptr, airplane::location_update, &sharedData[i]) != 0) {
+            if (pthread_create(&planeThreads[i], nullptr, airplane::location_update, &shared_data[i]) != 0) {
                 throw std::runtime_error("Failed to create plane thread");
             }
         }
@@ -102,7 +102,7 @@ void planeManager::initialize() {
     }
 
     airplane* planeManager::getSharedData() const {
-        return sharedData;
+        return shared_data;
     }
 
     int planeManager::checkIds(int id){
@@ -110,7 +110,7 @@ void planeManager::initialize() {
 
     	for (int i = 0; i < numOfPlanes; i++){
 
-    		if (id == sharedData[i].get_id()){
+    		if (id == shared_data[i].get_id()){
     			pthread_rwlock_unlock(&rwlock);
 
     			return 1;
@@ -120,3 +120,91 @@ void planeManager::initialize() {
 
     	return 0;
     }
+
+    void planeManager::printPlane(int id){
+    	pthread_rwlock_rdlock(&rwlock);
+
+		for (int i = 0; i < numOfPlanes; i++){
+
+			if (id == shared_data[i].get_id()){
+		        std::lock_guard<std::mutex> lock(cout_mutex);
+
+				cout << "Plane " << shared_data[i].get_id() << " has altitude of " << shared_data[i].get_z() << " in the direction of (" << shared_data[i].get_x() << "," << shared_data[i].get_y() << ") with a speed of " <<
+						 shared_data[i].get_speed() << endl;
+
+				pthread_rwlock_unlock(&rwlock);
+
+				break;
+			}
+		}
+		pthread_rwlock_unlock(&rwlock);
+
+
+    }
+    void planeManager::changeSpeed(int id, int newSpeed){
+	pthread_rwlock_rdlock(&rwlock);
+
+	for (int i = 0; i < numOfPlanes; i++){
+
+		if (id == shared_data[i].get_id()){
+
+			double currentSpeed = shared_data[i].get_speed();
+
+			double speedScaling = newSpeed/currentSpeed;
+
+			shared_data[i].change_speed(speedScaling);
+
+	        std::lock_guard<std::mutex> lock(cout_mutex);
+			cout << "Plane " << id << " will now have a speed of " << shared_data[i].get_speed() << endl;
+
+			pthread_rwlock_unlock(&rwlock);
+
+			return;
+		}
+	}
+	pthread_rwlock_unlock(&rwlock);
+	return;
+}
+
+void planeManager::changeAltitude(int id,int altitude){
+	pthread_rwlock_rdlock(&rwlock);
+
+	for (int i = 0; i < numOfPlanes; i++){
+
+		if (id == shared_data[i].get_id()){
+
+			shared_data[i].change_altitude(altitude);
+
+			std::lock_guard<std::mutex> lock(cout_mutex);
+			cout << "Plane " << id << " will now have an altitude of " << shared_data[i].get_z() << endl;
+
+			pthread_rwlock_unlock(&rwlock);
+
+			return;
+		}
+	}
+	pthread_rwlock_unlock(&rwlock);
+	return;
+
+}
+void planeManager::changeDirection(int id ,int x,int y){
+	pthread_rwlock_rdlock(&rwlock);
+
+	for (int i = 0; i < numOfPlanes; i++){
+
+		if (id == shared_data[i].get_id()){
+
+			shared_data[i].change_direction(x,y);
+
+			std::lock_guard<std::mutex> lock(cout_mutex);
+			cout << "Plane " << id << " will now go in the direction of (" << shared_data[i].get_x() << ","<< shared_data[i].get_y() <<")" << endl;
+
+			pthread_rwlock_unlock(&rwlock);
+
+			return;
+		}
+	}
+	pthread_rwlock_unlock(&rwlock);
+	return;
+}
+

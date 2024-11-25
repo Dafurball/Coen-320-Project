@@ -69,6 +69,12 @@ void ComputerSystem::startComms(){
 	pthread_create(&comms_thread, nullptr, startServer, this);
 }
 
+
+//
+void ComputerSystem::startCommunicationThread(){
+	pthread_create(&toCommunication_thread, nullptr, startServer, this);
+}
+
 //Used to join computerSystem pthread in main
 pthread_t ComputerSystem::getSystemThread() const {
     return ComputerSystem_thread;
@@ -76,6 +82,10 @@ pthread_t ComputerSystem::getSystemThread() const {
 
 pthread_t ComputerSystem::getComThread() const {
     return comms_thread;
+}
+
+pthread_t ComputerSystem::getToCommunication_thread() const{
+	return toCommunication_thread;
 }
 
 
@@ -148,8 +158,11 @@ void* ComputerSystem::startServer(void*) {
 	    return nullptr;
 }
 
+//Third thread for channel betwe computer and communication
+void* ComputerSystem::startChannelToCommunication(void *arg){
 
 
+}
 
 
 
