@@ -83,6 +83,7 @@ pthread_t ComputerSystem::getComThread() const {
 
 void* ComputerSystem::startServer(void*) {
 
+
 	    // Attach the server to a channel
 	    name_attach_t* attach = name_attach(NULL, "ComputerSystemServer", 0);
 	    if (attach == NULL) {
@@ -109,15 +110,26 @@ void* ComputerSystem::startServer(void*) {
 
 	        // Log the received message
 	        cout<<SEPAR << "ComputerSystem: Received command for Aircraft " << msg.id
-	                  << ": " << msg.command << " with value " << msg.value << std::endl;
+	                  << ": " << msg.command << " with value " << msg.value << endl;
+
+//////////////////////////////////////////////////////////////////////////////////////
+	        //Block
+	        // Passing command to Plane
+	        //
+
+	        int tempId=msg.id;
+	        string tempCommand = msg.command;
+	        int value = msg.value;
 
 
+	       	//Block
+	        //////////////////////////////////////////////////////////////////////////////////////
 
 
 	        // Reply back to the client (acknowledge the message)
 	        msg_struct reply;
 	        reply.id = msg.id; // Echo back the ID
-	        strncpy(reply.command, "Acknowledged", sizeof(reply.command) - 1);
+	        strncpy(reply.command, ">> ComputerSystem: Received Command", sizeof(reply.command) - 1);
 	        reply.command[sizeof(reply.command) - 1] = '\0'; // Ensure null termination
 	        reply.value = 0; // Optional value for reply
 
@@ -135,6 +147,12 @@ void* ComputerSystem::startServer(void*) {
 	    name_detach(attach, 0);
 	    return nullptr;
 }
+
+
+
+
+
+
 
 //the method our ComputerSystem thread calls repeatedly
 void * ComputerSystem::collision(void * arg) {

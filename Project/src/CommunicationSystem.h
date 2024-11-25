@@ -1,43 +1,41 @@
-/*
- * CommunicationSystem.h
- *
- *  Created on: Nov 8, 2024
- *      Author: 15145
- */
+
 
 #ifndef SRC_COMMUNICATIONSYSTEM_H_
 #define SRC_COMMUNICATIONSYSTEM_H_
 
-#include <string>
+#include <iostream>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <iostream>
+#include <pthread.h>
+#include <fstream>
+#include <sstream>
+
 #include "airplane.h"
+
+#include <string>
 
 class CommunicationSystem {
 public:
 	CommunicationSystem();
 	virtual ~CommunicationSystem();
 
-	//Valeriia
-	//Send command to plane with ID
-	void sendMessageToAirplane(int id, const std::string& command);
-
-	airplane* findAirplaneID(int id);
+	//start Thread and get Thread
+	void startCommunicationThread();
+	pthread_t getCommunicationThread() const;
 
 
-	//
-	void startCommunicationThread();       // repetitively called by CommunicationSystem thread
 
 private:
-	int shm_fd;		//shared memory descriptor
-	int numofPlanes;
-	airplane* shared_data;	//pointer to shared data
 
+	 planeManager * manager;
 
-	bool runningCommunicationSystem;	//to indicate if the Communication System is running
+	 static void* serverThread(void* arg);
 
-	pthread_t CommunicationSystem_thread;
-
-
-
+	 bool running;                 // Indicates if the server is running
+	 pthread_t serverThreadHandle;
 };
 
 #endif /* SRC_COMMUNICATIONSYSTEM_H_ */

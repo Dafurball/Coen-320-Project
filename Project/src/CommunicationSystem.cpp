@@ -39,87 +39,21 @@ CommunicationSystem::~CommunicationSystem() {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
-//Handle sending message to airplane
+void CommunicationSystem::startCommunicationThread(){
+	running = true;
+	pthread_create(&serverThreadHandle, nullptr, serverThread, this);
 
-airplane* CommunicationSystem::findAirplaneID(int id) {
-    for (int i = 0; i < numofPlanes; i++) {
 
 
-        if (shared_data[i].get_id() == id) {
-            return &shared_data[i];
-        }
-
-    }
-    return nullptr;
 }
-
-void CommunicationSystem::sendMessageToAirplane(int id, const std::string& command) {
-
-	//getting the airplane with the passed ID
-    airplane* airplane = findAircraftByID(id);
-
-    if (airplane) {
-        cout << "COMMAND TO airplane with ID: " << id << ": " << command << endl;
-        // Assuming the airplane class has a processCommand method
-        airplane->processCommand(command);
-    } else {
-        cerr << "Error: Airplane ID " << id << " does not exist.\n";
-    }
-}
-
-
-// Start Thread
-void CommunicationSystem::startCommunicationThread() {
-    runningCommunicationSystem = true;
-    pthread_create(&CommunicationSystem_thread, nullptr, [](void* arg) -> void* {
-        CommunicationSystem* comm = static_cast<CommunicationSystem*>(arg);
-        while (comm->runningCommunicationSystem) {
-            // Simulate repetitive communication tasks (e.g., processing commands)
-            sleep(1); // Placeholder for real functionality
-        }
-        return nullptr;
-    }, this);
+pthread_t CommunicationSystem::getCommunicationThread() const{
+		return serverThread;
 }
 
 
 
 
 
-//void CommunicationSystem::startCommunicationThread(){
-//	runningCommunicationSystem = true;
-//
-//	pthread_create(&communication_thread, nullptr, communicationThreadTransmission, this);
-//
-//}
-
-
-
-//static void* communicationThreadTransmission(void* arg) {
-//    Communication* comm = static_cast<Communication*>(arg);
-//
-//    while (comm->running) {
-//        std::unique_lock<std::mutex> lock(comm->queue_mutex);
-//        // Wait for a new command or stop signal
-//        comm->cv.wait(lock, [&]() { return !comm->command_queue.empty() || !comm->running; });
-//
-//        if (!comm->running) break; // Exit if stopping
-//
-//        // Retrieve the next command
-//        auto [aircraftID, command] = comm->command_queue.front();
-//        comm->command_queue.pop();
-//        lock.unlock();
-//
-//        // Process the command
-//        airplane* targetAircraft = comm->findAircraftByID(aircraftID);
-//        if (targetAircraft) {
-//            std::cout << "Sending command to Aircraft " << aircraftID << ": " << command << std::endl;
-//            targetAircraft->processCommand(command); // Assuming this function exists
-//        } else {
-//            std::cerr << "Error: Aircraft " << aircraftID << " not found!" << std::endl;
-//        }
-//    }
-//    return nullptr;
-//}
 
 
 

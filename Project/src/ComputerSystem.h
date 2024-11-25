@@ -19,12 +19,20 @@ class ComputerSystem {
 public:
 	ComputerSystem(int numPlanes);
 	virtual ~ComputerSystem();
+
+	//Thread 1
 	void startSystemThread();
 	void startComms();
+
+
 
 	pthread_t getSystemThread() const;
 	pthread_t getComThread() const;
 	void collisionTest();
+
+
+	//Thread with Communication
+	void startCommunicationThread();
 
 
 private:
@@ -36,8 +44,14 @@ private:
 
     pthread_t ComputerSystem_thread;
     pthread_t comms_thread;
+
+    pthread_t toCommunication_thread;	//!!!
+
+
 	static void* collision(void* arg);
 	static void* startServer(void *arg);
+
+	static void* startChannelToCommunication(void *arg);	//!!!
 
 
 

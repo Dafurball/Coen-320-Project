@@ -78,7 +78,7 @@ void OperatorConsole::handleCommands() {
 	            	   aircraftID = std::stoi(idStr);
 	            	   value = std::stoi(valueStr);
 	               } catch (const std::exception& e) {
-	                   std::cerr << ERROR << "Error: Invalid Airplane ID or value. Please enter a valid int number!\n"<< ERROR;
+	                   cerr << ERROR << "Error: Invalid Airplane ID or value. Please enter a valid int number!\n"<< ERROR;
 	                   continue;
 	               }
 
@@ -86,20 +86,20 @@ void OperatorConsole::handleCommands() {
 	               //check id is in the PlaneManager / is in shared memory
 	               int isValidID = manager->checkIds(aircraftID);
 	               if (!isValidID) {
-	                   std::cerr << ERROR<< "Error: Aircraft ID " << aircraftID << " not found in the airspace.\n"<< ERROR;
+	                   cerr<< ERROR << ERROR<< "Error: Aircraft ID " << aircraftID << " not found in the airspace.\n"<< ERROR;
 	                   continue;
 	               }
 
 	               //is in enum list of commands
 	               Command command = stringToCommand(commandStr);
 	                      if (command == Command::INVALID) {
-	                          std::cerr << "Invalid command: " << commandStr << ".\n";
+	                          cerr << ERROR<< "Invalid command: " << commandStr << endl;
 	                          continue;
 	                      }
 
 	               //2
 	               //Send command
-	               cout << "Processing command '" << commandStr << "' for Aircraft ID " << aircraftID << " Value:  "<<value<<endl;
+	               cout << ">> Processing command '" << commandStr << "' for Aircraft ID " << aircraftID << " Value:  "<<value<<endl;
 
 	               sendCommand(aircraftID, commandStr, value);
 

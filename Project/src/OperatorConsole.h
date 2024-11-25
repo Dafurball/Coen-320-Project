@@ -41,13 +41,13 @@ private:
 
 	pthread_t consoleThread;
 	// Flag to control the running state of the thread
-	    std::atomic<bool> runningOperatorConsole;
+	std::atomic<bool> runningOperatorConsole;
 
 	    // Static function to run as the pthread entry point
-	    static void* processCommands(void* arg);
+	static void* processCommands(void* arg);
 
 	    // Internal method for processing user commands
-	    void handleCommands();
+	void handleCommands();
 
 
 
