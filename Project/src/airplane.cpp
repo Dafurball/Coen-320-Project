@@ -44,6 +44,7 @@ airplane::~airplane() {
 	// TODO Auto-generated destructor stub
 }
 
+
 int airplane::get_id(){
 	return id;
 }
@@ -72,6 +73,28 @@ int airplane::get_speedZ(){
 	return SpeedZ;
 }
 
+int airplane::get_speed(){
+	double speed = sqrt(SpeedX*SpeedX + SpeedY*SpeedY + SpeedZ*SpeedZ);
+
+	return speed;
+}
+
+void airplane::change_speed(double scaling){
+	SpeedX = SpeedX * scaling;
+	SpeedY = SpeedY * scaling;
+	SpeedZ = SpeedZ * scaling;
+
+}
+
+void airplane::change_altitude(int z){
+	this-> z = z;
+}
+
+void airplane::change_direction(int x, int y){
+	this-> x = x;
+	this-> y = y;
+}
+
 
 
 //start routine for each pthread of type airplane created
@@ -87,9 +110,6 @@ void* airplane::location_update(void *arg){
     	plane->new_location();
     	sleep(1);//plane->print();
 
-
-
-    	//time for when location is updated
     }
     return nullptr;
 
@@ -97,9 +117,6 @@ void* airplane::location_update(void *arg){
 
 //Method that updates an airplane's location based on their current coordinates plus their speed multiplied by the delta (which is 1 since we update every second)
 void airplane::new_location(){
-
-    //pthread_mutex_lock(&reader_mutex);
-    //sem_wait(&shared_access);
 	pthread_rwlock_wrlock(&rwlock);
     x = x + SpeedX * delta;
     y = y + SpeedY * delta;
@@ -108,21 +125,12 @@ void airplane::new_location(){
     time = time + delta;
 	pthread_rwlock_unlock(&rwlock);
 
-
-
-  //  sem_post(&shared_access);
-    //pthread_mutex_unlock(&reader_mutex);
-
-    //Print was used to test functionality of airplane class
-  //  print();
-
 }
 
-//Prints an airplane's info, including their speed (as a whole value, not their x/y/x components).  Mostly for testing
+//Prints an airplane's info, including their speed (as a whole value, not their x/y/x components)
 void airplane::print(){
-	double speed = sqrt(SpeedX*SpeedX + SpeedY*SpeedY + SpeedZ*SpeedZ);
 
     std::lock_guard<std::mutex> lock(cout_mutex);
 
-	cout << "The Test from airplane: Plane ID: " << id << " at time "<< time << " seconds has coordinates (" << x << "," << y << "," << z << ") with a speed of "  << speed << endl;
+    cout << "Plane " << id << " has altitude of " << z << " in the direction of (" << x << "," << y << ") with a speed of " << get_speed() << endl;
 }

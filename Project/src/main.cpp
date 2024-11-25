@@ -72,6 +72,12 @@ int main() {
     OperatorConsole console(manager);
     console.startOperatorConsoleThread();
 
+    manager.printPlane(103);
+    manager.changeSpeed(103, 100);
+   manager.changeAltitude(103, 100);
+   manager.changeDirection(103, 100, 200);
+
+
 
     //Joining all the threads into the main thread
     pthread_join(Radar.getRadarThread(), nullptr);

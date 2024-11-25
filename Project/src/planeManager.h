@@ -25,12 +25,17 @@ public:
 
     int checkIds(int);
 
+    void printPlane(int);
+    void changeSpeed(int, int);
+    void changeAltitude(int,int);
+    void changeDirection(int,int,int);
+
 private:
     const std::string filename;
     int numOfPlanes;
     airplane* planes;
     pthread_t* planeThreads;
-    airplane* sharedData;
+    airplane* shared_data;
     int sharedFd;
 };
 

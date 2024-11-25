@@ -24,6 +24,9 @@ public:
 	int get_speedZ();
 
 	int get_speed();
+	void change_speed(double);
+	void change_altitude(int);
+	void change_direction(int, int);
 
 
 	void new_location();
@@ -38,7 +41,7 @@ private:
 	int time;
 	int id;
 	int x,y,z;
-	int SpeedX,SpeedY,SpeedZ;
+	double SpeedX,SpeedY,SpeedZ;
 	int delta = 1;
 
 
