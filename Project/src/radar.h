@@ -19,7 +19,6 @@ using namespace std;
 
 class radar {
 public:
-	radar();
     radar(int);
 	virtual ~radar();
 

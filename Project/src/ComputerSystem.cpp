@@ -70,6 +70,11 @@ pthread_t ComputerSystem::getComThread() const {
     return comms_thread;
 }
 
+void ComputerSystem::changeDelta(int delta){
+	this-> delta = delta;
+}
+
+
 
 
 
@@ -78,7 +83,6 @@ void* ComputerSystem::startServer(void*) {
 	    name_attach_t* attach = name_attach(NULL, "ComputerSystemServer", 0);
 	    if (attach == NULL) {
 	        perror("name_attach");
-	        nullptr;
 	    }
 
 	    std::cout << "ComputerSystem: Server is running, waiting for messages..." << std::endl;
@@ -116,7 +120,6 @@ void* ComputerSystem::startServer(void*) {
 
 	    // 4. Detach the name
 	    name_detach(attach, 0);
-	    nullptr;
 }
 
 //the method our ComputerSystem thread calls repeatedly
@@ -143,8 +146,6 @@ void ComputerSystem::collisionTest() {
         for (int j = i + 1; j < numofPlanes; j++) {
             pthread_rwlock_rdlock(&rwlock);
 
-            //How far into the future do we check for collisions, need to find a way to change/set it during runtime
-            int delta = 1;
 
             int future_x_of_i = shared_data[i].get_x() + shared_data[i].get_speedX() * delta;
             int future_y_of_i = shared_data[i].get_y() + shared_data[i].get_speedY() * delta;

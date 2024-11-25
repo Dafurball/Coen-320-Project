@@ -79,6 +79,7 @@ int airplane::get_speed(){
 	return speed;
 }
 
+/////////////////////////////////////////////////////////////////////Methods called by Communications through Manager///////////////////////////////////////////////////////////////////////////////////////////////////
 void airplane::change_speed(double scaling){
 	SpeedX = SpeedX * scaling;
 	SpeedY = SpeedY * scaling;
@@ -95,7 +96,16 @@ void airplane::change_direction(int x, int y){
 	this-> y = y;
 }
 
+//Prints an airplane's info, including their speed (as a whole value, not their x/y/x components)
+void airplane::print(){
 
+    std::lock_guard<std::mutex> lock(cout_mutex);
+
+    cout << "Plane " << id << " has altitude of " << z << " in the direction of (" << x << "," << y << ") with a speed of " << get_speed() << endl;
+}
+
+
+///////////////////////////////////////////////////////////////////////////Thread routine to update airplane locations//////////////////////////////////////////////////////////////////////////////////////////////////
 
 //start routine for each pthread of type airplane created
 //I now see the power of typecasting, I didnt have to change anything when changing implementation from airplane objects to shared memory!
@@ -108,7 +118,7 @@ void* airplane::location_update(void *arg){
     	sem_wait(&airplane_semaphore);
 
     	plane->new_location();
-    	sleep(1);//plane->print();
+    	sleep(1);
 
     }
     return nullptr;
@@ -125,12 +135,4 @@ void airplane::new_location(){
     time = time + delta;
 	pthread_rwlock_unlock(&rwlock);
 
-}
-
-//Prints an airplane's info, including their speed (as a whole value, not their x/y/x components)
-void airplane::print(){
-
-    std::lock_guard<std::mutex> lock(cout_mutex);
-
-    cout << "Plane " << id << " has altitude of " << z << " in the direction of (" << x << "," << y << ") with a speed of " << get_speed() << endl;
 }

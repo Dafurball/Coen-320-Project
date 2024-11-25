@@ -32,8 +32,9 @@ void setup_timer(timer_t& timerid, TimerData* timerData);
 
 int main() {
 
-////////////////////////////////////////////////////////////////////////////////////Airplanes and their Manager////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    const std::string filename = "/data/var/tmp/example.txt";
+////////////////////////////////////////////////////////////////////////////////////Set up for Airplanes and their Manager////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //File from where we will load the airplanes from, choose from low/med/high congestion
+	const std::string filename = "/data/var/tmp/example.txt";
 
     // Create and initialize the plane manager
     planeManager manager(filename);
@@ -56,8 +57,6 @@ int main() {
 
 ////////////////////////////////////////////////////////////////////////////////////Remaining ATC Set Up////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    // Start plane threads
-    manager.startPlaneThreads();
 
     //Initialize and start radar threads
     radar Radar(manager.getNumOfPlanes());
@@ -71,13 +70,6 @@ int main() {
     //Initializing Operator
     OperatorConsole console(manager);
     console.startOperatorConsoleThread();
-
-    manager.printPlane(103);
-    manager.changeSpeed(103, 100);
-   manager.changeAltitude(103, 100);
-   manager.changeDirection(103, 100, 200);
-
-
 
     //Joining all the threads into the main thread
     pthread_join(Radar.getRadarThread(), nullptr);
