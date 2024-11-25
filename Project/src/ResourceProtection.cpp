@@ -23,3 +23,13 @@ void cleanupSharedResources() {
 
 }
 
+void redirectToTerminal(const char* terminal) {
+    int fd = open(terminal, O_WRONLY);
+    if (fd != -1) {
+        dup2(fd, STDOUT_FILENO); // Redirect `std::cout` to the specified terminal
+        close(fd);
+    } else {
+        perror("Failed to open terminal");
+    }
+}
+

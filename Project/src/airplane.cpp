@@ -8,6 +8,20 @@
 #include "airplane.h"
 #include "ResourceProtection.h"
 
+
+#include <pthread.h>
+#include <fstream>
+#include <sstream>
+#include <pthread.h>
+
+#include <sys/dispatch.h>
+#include "ComputerSystem.h"
+#include "radar.h"
+#include "airplane.h"
+#include "ResourceProtection.h"
+
+using namespace std;
+
 using namespace std;
 
 airplane::airplane() {
@@ -57,6 +71,8 @@ int airplane::get_speedY(){
 int airplane::get_speedZ(){
 	return SpeedZ;
 }
+
+
 
 //start routine for each pthread of type airplane created
 //I now see the power of typecasting, I didnt have to change anything when changing implementation from airplane objects to shared memory!

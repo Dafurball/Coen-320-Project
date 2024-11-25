@@ -128,7 +128,7 @@ void * ComputerSystem::collision(void * arg) {
 
             system->collisionTest();
 
-
+            sleep(1);
 
 	    }
 	    return nullptr;

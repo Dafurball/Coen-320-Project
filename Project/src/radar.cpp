@@ -39,7 +39,7 @@ radar::~radar() {
 }
 
 // Constructor to load planes from file, as well as to set up shared memory and load planes to it
-radar::radar(int numPlanes): numofPlanes(numPlanes), running(false) { // @suppress("Class members should be properly initialized")
+radar::radar(int numPlanes): numofPlanes(numPlanes), running(false) {
 
 
 	//Creating shared memory for airplane data
@@ -91,7 +91,9 @@ void * radar::updater(void * arg) {
 
 
             radarObj->printPlanes(); // Call the existing printPlanes method
-            cout << endl;
+            cout << "\n" << endl;
+
+
 	    }
 	    return nullptr;
 }
@@ -100,11 +102,12 @@ void * radar::updater(void * arg) {
 
 //Print Function, is the "ping" from plane to radar
 void radar::printPlanes() {
+	cout << "\n" << endl;
 	for (int i = 0; i < numofPlanes; ++i) {
 		pthread_rwlock_rdlock(&rwlock);
 
         std::lock_guard<std::mutex> lock(cout_mutex);
-		cout<< "\nID: " << shared_data[i].get_id() << " Time: " << shared_data[i].get_time() << " Position: (" << shared_data[i].get_x() << ", " << shared_data[i].get_y() << ", " << shared_data[i].get_z() << ")"
+		cout<< "ID: " << shared_data[i].get_id() << " Time: " << shared_data[i].get_time() << " Position: (" << shared_data[i].get_x() << ", " << shared_data[i].get_y() << ", " << shared_data[i].get_z() << ")"
 				  << " Speed: (" << shared_data[i].get_speedX() << ", " << shared_data[i].get_speedY() << ", " << shared_data[i].get_speedZ() << ")"
 				  << endl << flush;
 

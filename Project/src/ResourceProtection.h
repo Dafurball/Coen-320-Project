@@ -9,6 +9,7 @@
 
 using namespace std;
 
+
 extern mutex cout_mutex;
 
 extern pthread_rwlock_t rwlock;
@@ -20,6 +21,9 @@ extern sem_t collision_semaphore;
 void initializeResourceProtection(int);
 
 void cleanupSharedResources();
+
+void redirectToTerminal(const char* terminal);
+
 
 
 #endif /* SRC_RESOURCEPROTECTION_H_ */

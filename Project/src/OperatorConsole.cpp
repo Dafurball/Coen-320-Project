@@ -19,7 +19,7 @@ typedef struct {
 } msg_struct;
 
 
-OperatorConsole::OperatorConsole() : runningOperatorConsole(false) {}
+OperatorConsole::OperatorConsole(planeManager & manager) : manager(&manager), runningOperatorConsole(false) {}
 
 OperatorConsole::~OperatorConsole() {
 	// TODO Auto-generated destructor stub
@@ -38,37 +38,42 @@ void* OperatorConsole::processCommands(void* arg) {
 }
 
 void OperatorConsole::handleCommands() {
-    std::string command;
+	    std::string command;
+	            while (true) {
+	                std::cout << ">> "; // Prompt for input
+	                std::getline(std::cin, command);
 
-    while (runningOperatorConsole) {
-        std::cout << ">> "; // Prompt for user input
-        std::getline(std::cin, command);
+	                // Handle "exit" command
+	                if (command == "exit") {
+	                    std::cout << "Shutting down the system...\n";
+	                    break;
+	                }
 
-        if (command == "exit") {
-            std::cout << "Exiting Operator Console...\n";
-            runningOperatorConsole = false;
-            break;
-        }
+	                // Parse the command
+	                size_t spacePos = command.find(' ');
+	                if (spacePos == std::string::npos) {
+	                    std::cerr << "Invalid command format. Use: <AircraftID> <Command>\n";
+	                    continue;
+	                }
 
-        // Parse the command
-        size_t spacePos = command.find(' ');
-        if (spacePos == std::string::npos) {
-            std::cerr << "Invalid command format. Use: <AircraftID> <Command>\n";
-            continue;
-        }
+	                // Extract Aircraft ID and Command
+	                std::string idStr = command.substr(0, spacePos);
+	                std::string action = command.substr(spacePos + 1);
 
-        std::string idStr = command.substr(0, spacePos);
-        std::string action = command.substr(spacePos + 1);
+	                try {
+	                    int aircraftID = std::stoi(idStr); // Convert Aircraft ID to an integer
+	                    sendCommand(aircraftID, action); // Send the command
+	                } catch (const std::exception& e) {
+	                    std::cerr << "Error: Invalid Aircraft ID. Please enter a valid number.\n";
+	                }
 
-        try {
-            int aircraftID = std::stoi(idStr); // Convert Aircraft ID to an integer
-            sendCommand(aircraftID, action);
-        } catch (const std::exception& e) {
-            std::cerr << "Error: Invalid Aircraft ID.\n";
-        }
-    }
+	                               int aircraftID = std::stoi(idStr); // Convert Aircraft ID to an integer
+
+                int answer =  manager->checkIds(aircraftID);
+
+              cout << answer << endl;
+	            }
 }
-
 
 
 void OperatorConsole::sendCommand(int aircraftID, const std::string& command){
@@ -146,6 +151,3 @@ pthread_t OperatorConsole::getconsoleThread() const {
 //        }
 //    }
 //}
-
-
-
