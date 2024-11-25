@@ -19,6 +19,9 @@
 #include "airplane.h"
 #include "planeManager.h"
 
+
+#define SEPAR "\n\n------------------------------------------------------------------\n\n"
+
 using namespace std;
 
 //Message structure for IPC
@@ -27,6 +30,10 @@ typedef struct {
 	    char command[100];      //command
 	    int value;             //number to increment
 } msg_struct;
+
+
+
+
 
 CommunicationSystem::CommunicationSystem(planeManager & manager) : manager(&manager) {}
 
@@ -55,7 +62,7 @@ void* CommunicationSystem::startServerThread(void* arg) {
 		        nullptr;
 		    }
 
-		    cout << "CommunicationSystem: Server is running, waiting for messages...\n\n" ;
+		    cout <<SEPAR << "CommunicationSystem: Server is running, waiting for messages...\n\n" ;
 
 		    while (true) {
 		    	        int rcvid;
@@ -73,8 +80,8 @@ void* CommunicationSystem::startServerThread(void* arg) {
 		    	        }
 
 		    	        // Log the received message
-		    	        cout<< ">> CommunicationSystem: Received command for Aircraft " << msg.id
-		    	                  << ": " << msg.command << " with value " << msg.value << endl;
+		    	        cout<<SEPAR<< "CommunicationSystem: Received command for Aircraft " << msg.id
+		    	                  << ": " << msg.command << " with value " << msg.value << endl <<SEPAR;
 
 		    //////////////////////////////////////////////////////////////////////////////////////
 		    	        //Block
@@ -93,7 +100,7 @@ void* CommunicationSystem::startServerThread(void* arg) {
 		    	        // Reply back to the client (acknowledge the message)
 		    	        msg_struct reply;
 		    	        reply.id = msg.id; // Echo back the ID
-		    	        strncpy(reply.command, ">> CommunicationSystem: Received Command", sizeof(reply.command) - 1);
+		    	        strncpy(reply.command, "\nCommunicationSystem: Received Command", sizeof(reply.command) - 1);
 		    	        reply.command[sizeof(reply.command) - 1] = '\0'; // Ensure null termination
 		    	        reply.value = 0; // Optional value for reply
 

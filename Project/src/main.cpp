@@ -72,6 +72,7 @@ int main() {
     ComputerSystem system(manager.getNumOfPlanes());
     system.startSystemThread();
     system.startComms();
+    system.startCommunicationThread();
 
     //Initializing Operator
     OperatorConsole console(manager);

@@ -15,6 +15,9 @@
 #include "radar.h"
 #include "airplane.h"
 
+#include <queue>      // For std::queue
+#include <mutex>
+
 class ComputerSystem {
 public:
 	ComputerSystem(int numPlanes);
@@ -56,9 +59,11 @@ private:
 	static void* collision(void* arg);
 	static void* startServer(void *arg);
 
-	static void* startChannelToCommunication(void *arg);	//!!!
+	static void* processCommandsToCommunication(void *arg);	//!!!
+	void processCommandsToCommunication(int aircraftID, const std::string& command, int value);
 
 
+	//?????????
 
 
 };

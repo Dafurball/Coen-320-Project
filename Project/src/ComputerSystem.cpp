@@ -9,6 +9,7 @@
 #include <sstream>
 #include <pthread.h>
 #include <mutex>
+#include <queue>
 
 #include <sys/dispatch.h>
 #include "ComputerSystem.h"
@@ -20,6 +21,8 @@ using namespace std;
 
 #define SEPAR "\n\n$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n\n"
 
+#define SEPARATE "\n\n#####################################################################\n\n"
+
 //Message structure for IPC
 
 typedef struct {
@@ -28,7 +31,9 @@ typedef struct {
     int value;
 } msg_struct;
 
-
+int tempId=0;
+string tempCommand = " ";
+int tempValue = 0;
 
 
 ComputerSystem::ComputerSystem(int numPlanes): numofPlanes(numPlanes), running_collision(false) {
@@ -72,7 +77,7 @@ void ComputerSystem::startComms(){
 
 //
 void ComputerSystem::startCommunicationThread(){
-	pthread_create(&toCommunication_thread, nullptr, startServer, this);
+	pthread_create(&toCommunication_thread, nullptr, processCommandsToCommunication, this);
 }
 
 //Used to join computerSystem pthread in main
@@ -127,9 +132,10 @@ void* ComputerSystem::startServer(void*) {
 	        // Passing command to Plane
 	        //
 
-	        int tempId=msg.id;
-	        string tempCommand = msg.command;
-	        int value = msg.value;
+	         tempId=msg.id;
+	         tempCommand = msg.command;
+	         tempValue = msg.value;
+
 
 
 	       	//Block
@@ -159,7 +165,68 @@ void* ComputerSystem::startServer(void*) {
 }
 
 //Third thread for channel betwe computer and communication
-void* ComputerSystem::startChannelToCommunication(void *arg){
+void* ComputerSystem::processCommandsToCommunication(void *arg){
+//	ComputerSystem* sys = static_cast<ComputerSystem*>(arg);
+//	sys->processCommandsToCommunication();
+
+	  // Define the CommunicationSystem channel name
+	    const char* CHANNEL_NAME = "CommunicationSystemServer";
+
+	    while (true) {
+	        //Getting values of global variables
+	        unsigned int localId = tempId;
+	        std::string localCommand = tempCommand;
+	        int localValue = tempValue;
+
+	        //skip
+	        if (localId == 0 || localCommand == " " || localValue == 0) {
+	            sleep(1);
+	            continue;
+	        }
+
+	        //1
+	        //Channel open
+	        int coid = name_open(CHANNEL_NAME, 0);
+	        if (coid == -1) {
+	            std::cerr << "ERROR: Failed to connect to channel: " << CHANNEL_NAME << std::endl;
+	            sleep(1); // Retry after a delay
+	            continue;
+	        }
+
+	        cout <<SEPARATE << "ComputerSystem: Connected to CommunicationSystem on channel: " << CHANNEL_NAME << std::endl;
+
+	        // Prepare the message
+	        msg_struct msg;
+	        msg.id = localId;
+	        strncpy(msg.command, localCommand.c_str(), sizeof(msg.command) - 1);
+	        msg.command[sizeof(msg.command) - 1] = '\0'; // Ensure null termination
+	        msg.value = localValue;
+
+	        // Send the message to CommunicationSystem
+	        msg_struct reply;
+	        if (MsgSend(coid, &msg, sizeof(msg), &reply, sizeof(reply)) == -1) {
+	            perror("Error sending message");
+	            name_close(coid);
+	            sleep(1); // Retry after a delay
+	            continue;
+	        }
+
+	        // Print the reply from CommunicationSystem
+	        cout <<SEPARATE << "ComputerSystem: Received reply from CommunicationSystem - " << reply.command << endl<<SEPARATE;
+
+	        // Close the channel
+	        name_close(coid);
+
+	        // Reset global variables after sending
+	        tempId = 0;
+	        tempCommand = " ";
+	        tempValue = 0;
+
+	        // Sleep to avoid rapid consecutive iterations
+	        sleep(1);
+	    }
+
+	    return nullptr;
 
 
 }
