@@ -1,9 +1,3 @@
-/*
- * Command.h
- *
- *  Created on: Nov 25, 2024
- *      Author: 15145
- */
 
 #ifndef SRC_COMMAND_H_
 #define SRC_COMMAND_H_

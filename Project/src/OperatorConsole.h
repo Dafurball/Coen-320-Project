@@ -31,7 +31,7 @@ public:
 	// Function that sends a command to aircraft (to request airplane to change its course)
 
 
-	void sendCommand(int aircraftID, const std::string& command);
+	void sendCommand(int aircraftID, const std::string& command, int value);
 
 	pthread_t getconsoleThread() const;
 

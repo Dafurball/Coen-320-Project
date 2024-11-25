@@ -1,9 +1,3 @@
-/*
- * ComputerSystem.h
- *
- *  Created on: Nov. 14, 2024
- *      Author: dafur
- */
 
 #ifndef SRC_COMPUTERSYSTEM_H_
 #define SRC_COMPUTERSYSTEM_H_
