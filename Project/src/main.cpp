@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 #include <pthread.h>
 #include <fstream>
 #include <sstream>
@@ -28,9 +29,12 @@ void timer_callback(union sigval);
 
 void setup_timer(timer_t& timerid, TimerData* timerData);
 
-
+void printWelcome();
 
 int main() {
+
+	//Welcome Message
+	printWelcome();
 
 ////////////////////////////////////////////////////////////////////////////////////Airplanes and their Manager////////////////////////////////////////////////////////////////////////////////////////////////////////////
     const std::string filename = "/data/var/tmp/example.txt";
@@ -129,5 +133,28 @@ void timer_callback(union sigval sv) {
     if (tick_count % 5 == 0) {
         sem_post(&radar_semaphore); // Unblock radar every 5 seconds
     }
+}
+
+
+void printWelcome(){
+
+    cout << "************************************************************" << endl;
+    cout << "*                                                          *" << endl;
+    cout << "*              AIR TRAFFIC CONTROL SYSTEM                  *" << endl;
+    cout << "*                                                          *" << endl;
+    cout << "************************************************************" << endl;
+    cout << "************************************************************" << endl;
+    cout << "*                                                          *" << endl;
+    cout << "*    Commands:                                             *" << endl;
+    cout << "*      pp - Print plane details                            *" << endl;
+    cout << "*      e  - Exit                                           *" << endl;
+    cout << "*      ca - Change altitude                                *" << endl;
+    cout << "*      cs - Change speed                                   *" << endl;
+    cout << "*      cp - Change position                                *" << endl;
+    cout << "*      ct - Change time between collision                  *" << endl;
+    cout << "*                                                          *" << endl;
+    cout << "************************************************************" << endl;
+	cout << endl<< endl;
+
 }
 

@@ -1,0 +1,29 @@
+/*
+ * Command.cpp
+ *
+ *  Created on: Nov 25, 2024
+ *      Author: 15145
+ */
+#include <string>
+#include <unordered_map>
+#include <iostream>
+
+#include "Command.h"
+
+Command stringToCommand(const std::string& command) {
+    static const std::unordered_map<std::string, Command> commandMap = {
+        {"pp", Command::PP},
+        {"e", Command::E},
+        {"ca", Command::CA},
+        {"cs", Command::CS},
+        {"cp", Command::CP},
+        {"ct", Command::CT}
+    };
+
+    auto it = commandMap.find(command);
+    if (it != commandMap.end()) {
+        return it->second;
+    }
+    return Command::INVALID;
+}
+

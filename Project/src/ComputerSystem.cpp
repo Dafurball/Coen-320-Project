@@ -165,7 +165,7 @@ void ComputerSystem::collisionTest() {
 
             if ((squared_horizontal_distance <= min_horizontal) && (squared_vertical_distance <= min_vertical)) {
                 std::lock_guard<std::mutex> lock(cout_mutex);
-                std::cout << "Collision detected between plane " << shared_data[i].get_id()
+                std::cout << "\t\t\t\tCollision detected between plane " << shared_data[i].get_id()
                           << " and plane " << shared_data[j].get_id()
                           << " will occur within " << delta << " second(s)!" << std::endl;
             }
