@@ -23,21 +23,29 @@ using namespace std;
 
 #define SEPARATE "\n\n#####################################################################\n\n"
 
-//Message structure for IPC
 
+
+//Message structure for IPC
 typedef struct {
     unsigned int id;
     char command[100];
-    int value;
+    int valueX;
+    int valueY;
 } msg_struct;
+
+
+
 
 int tempId=0;
 string tempCommand = " ";
-int tempValue = 0;
-
-
+int tempValueX  = 0;
+int tempValueY  = 0;
 
 std::mutex commandMutex;
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 
 ComputerSystem::ComputerSystem(int numPlanes): numofPlanes(numPlanes), running_collision(false) {
@@ -97,160 +105,134 @@ pthread_t ComputerSystem::getToCommunication_thread() const{
 	return toCommunication_thread;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 
-void* ComputerSystem::startServer(void*) {
 
+void* ComputerSystem::startServer(void* arg) {
+    name_attach_t* attach = name_attach(NULL, "ComputerSystemServer", 0);
+    if (attach == NULL) {
+        perror("name_attach");
+        return nullptr;
+    }
 
-	    // Attach the server to a channel
-	    name_attach_t* attach = name_attach(NULL, "ComputerSystemServer", 0);
-	    if (attach == NULL) {
-	        perror("name_attach");
-	        return nullptr;
-	    }
+    std::cout << SEPAR << "ComputerSystem: Server is running, waiting for messages..." << std::endl;
 
-	    cout <<SEPAR << "ComputerSystem: Server is running, waiting for messages..." << std::endl;
+    while (true) {
+        int rcvid;
+        msg_struct msg;
 
-	    while (true) {
-	        int rcvid;
-	        msg_struct msg; // Message received from the client
+        // Receive a message
+        rcvid = MsgReceive(attach->chid, &msg, sizeof(msg), NULL);
+        if (rcvid == -1) {
+            perror("MsgReceive");
+            continue;
+        }
 
-	        // Receive a message
-	        rcvid = MsgReceive(attach->chid, &msg, sizeof(msg), NULL);
-	        if (rcvid == -1) {
-	            perror("MsgReceive");
-	            continue;
-	        }
+        if (rcvid == 0) {
+            continue; // Ignore pulse messages
+        }
 
-	        if (rcvid == 0) {
-	            continue; // Ignore pulse messages
-	        }
+        // Log received message
+        std::cout << SEPAR << "ComputerSystem: Received command for Aircraft " << msg.id
+                  << ": " << msg.command << " with valueX: " << msg.valueX
+                  << ", valueY: " << msg.valueY << std::endl;
 
-	        // Log the received message
-	        cout<<SEPAR << "ComputerSystem: Received command for Aircraft " << msg.id
-	                  << ": " << msg.command << " with value " << msg.value << endl;
+        // Update global variables for processing
+        {
+            std::lock_guard<std::mutex> lock(commandMutex);
+            tempId = msg.id;
+            tempCommand = msg.command;
+            tempValueX = msg.valueX;
+            tempValueY = msg.valueY;
+        }
 
-//////////////////////////////////////////////////////////////////////////////////////
-	        //Block
-	        // Passing command to Plane
-	        //
+        // Reply back to the client
+        msg_struct reply;
+        reply.id = msg.id;
+        strncpy(reply.command, ">> Command Received", sizeof(reply.command) - 1);
+        reply.command[sizeof(reply.command) - 1] = '\0';
+        reply.valueX = 0;
+        reply.valueY = 0;
 
-	         tempId=msg.id;
-	         tempCommand = msg.command;
-	         tempValue = msg.value;
+        MsgReply(rcvid, 0, &reply, sizeof(reply));
+    }
 
-//	         if(tempCommand == "ct"){
-//	        	 this->delta=tempValue;
-//	        	 cout << "\n\nHERE WE CHANGE DELTA\n\n";
-//	        			 return;
-//	         }
-
-
-
-	       	//Block
-	        //////////////////////////////////////////////////////////////////////////////////////
-
-
-	        // Reply back to the client (acknowledge the message)
-	        msg_struct reply;
-	        reply.id = msg.id; // Echo back the ID
-	        strncpy(reply.command, ">> ComputerSystem: Received Command", sizeof(reply.command) - 1);
-	        reply.command[sizeof(reply.command) - 1] = '\0'; // Ensure null termination
-	        reply.value = 0; // Optional value for reply
-
-	        MsgReply(rcvid, 0, &reply, sizeof(reply));
-
-//	        msg_struct reply = {msg.id};
-//	        strncpy(reply.command, "Acknowledged", sizeof(reply.command) - 1);
-//	        reply.command[sizeof(reply.command) - 1] = '\0';
-//	        reply.value = 0; // No processing, just acknowledgment
-//
-//	        MsgReply(rcvid, 0, &reply, sizeof(reply));
-	    }
-
-	    // Detach the channel
-	    name_detach(attach, 0);
-	    return nullptr;
+    name_detach(attach, 0);
+    return nullptr;
 }
 
-//Third thread for channel betwe computer and communication
-void* ComputerSystem::processCommandsToCommunication(void *arg){
-//	ComputerSystem* sys = static_cast<ComputerSystem*>(arg);
-//	sys->processCommandsToCommunication();
-
-	 const char* CHANNEL_NAME = "CommunicationSystemServer";
-
-	    while (true) {
-	        unsigned int localId;
-	        std::string localCommand;
-	        int localValue;
-
-	        //Lock mutex to access and modify global variables
-	        //assigning global variable to local
-	        {
-	            lock_guard<mutex> lock(commandMutex);
-	            localId = tempId;
-	            localCommand = tempCommand;
-	            localValue = tempValue;
-
-	            //skip empty data
-	            if (localId == 0 || localCommand == " " || localValue == 0) {
-	                sleep(1);
-	                continue;
-	            }
-
-	            //reseting for the new message values
-	            tempId = 0;
-	            tempCommand = " ";
-	            tempValue = 0;
-	        }
-
-	        //1
-	        //Channel open
-	        int coid = name_open(CHANNEL_NAME, 0);
-	        if (coid == -1) {
-	            std::cerr << "ERROR: Failed to connect to channel: " << CHANNEL_NAME << std::endl;
-	            sleep(1);
-	            continue;
-	        }
-
-	        std::cout << SEPARATE << "ComputerSystem: Connected to CommunicationSystem on channel: " << CHANNEL_NAME << std::endl;
-
-	        //2
-	        //Message
-	        msg_struct msg;
-	        msg.id = localId;
-	        strncpy(msg.command, localCommand.c_str(), sizeof(msg.command) - 1);
-	        msg.command[sizeof(msg.command) - 1] = '\0';
-	        msg.value = localValue;
-
-	        msg_struct reply;
-	        if (MsgSend(coid, &msg, sizeof(msg), &reply, sizeof(reply)) == -1) {
-	            perror("Error sending message");
-	            name_close(coid);
-	            sleep(1);
-	            continue;
-	        }
+//Third thread for channel between computer and communication
 
 
-	        cout << SEPARATE << "ComputerSystem: Received reply from CommunicationSystem - " << reply.command << SEPARATE;
+void* ComputerSystem::processCommandsToCommunication(void* arg) {
+    const char* CHANNEL_NAME = "CommunicationSystemServer";
 
-	        //3
-	        //Close Channel
-	        name_close(coid);
+    while (true) {
+        unsigned int localId;
+        std::string localCommand;
+        int localValueX, localValueY;
 
+        // Lock and read global variables
+        {
+            std::lock_guard<std::mutex> lock(commandMutex);
+            localId = tempId;
+            localCommand = tempCommand;
+            localValueX = tempValueX;
+            localValueY = tempValueY;
 
-//	        sleep(1);
-	    }
+            if (localId == 0 || localCommand == " ") {
+                sleep(1); // Wait for valid data
+                continue;
+            }
 
-	    return nullptr;
+            tempId = 0;
+            tempCommand = " ";
+            tempValueX = 0;
+            tempValueY = 0;
+        }
 
+        // Open a channel to CommunicationSystem
+        int coid = name_open(CHANNEL_NAME, 0);
+        if (coid == -1) {
+            std::cerr << "ERROR: Failed to connect to channel: " << CHANNEL_NAME << std::endl;
+            sleep(1);
+            continue;
+        }
 
+        std::cout << SEPARATE << "ComputerSystem: Connected to CommunicationSystem on channel: " << CHANNEL_NAME << std::endl;
+
+        // Prepare the message
+        msg_struct msg;
+        msg.id = localId;
+        strncpy(msg.command, localCommand.c_str(), sizeof(msg.command) - 1);
+        msg.command[sizeof(msg.command) - 1] = '\0';
+        msg.valueX = localValueX;
+        msg.valueY = localValueY;
+
+        // Send the message
+        msg_struct reply;
+        if (MsgSend(coid, &msg, sizeof(msg), &reply, sizeof(reply)) == -1) {
+            perror("Error sending message");
+            name_close(coid);
+            sleep(1);
+            continue;
+        }
+
+        std::cout << SEPARATE << "ComputerSystem: Received reply from CommunicationSystem - " << reply.command << SEPARATE;
+
+        name_close(coid);
+    }
+
+    return nullptr;
 }
 
 
 
+
+
+/////////////////////////////////////////////////////////////////////////////////////////
 
 //the method our ComputerSystem thread calls repeatedly
 void * ComputerSystem::collision(void * arg) {
@@ -310,57 +292,158 @@ void ComputerSystem::collisionTest() {
 
 
 
-//with old message struct
+// OLD
 //void* ComputerSystem::startServer(void*) {
 //
-//	    //1
-//		//Create a connection name for the server
+//
+//	    // Attach the server to a channel
 //	    name_attach_t* attach = name_attach(NULL, "ComputerSystemServer", 0);
 //	    if (attach == NULL) {
 //	        perror("name_attach");
-//	        nullptr;
+//	        return nullptr;
 //	    }
 //
-//	    cout <<SEPAR<< "ComputerSystem: Server is running, waiting for messages...\n\n";
+//	    cout <<SEPAR << "ComputerSystem: Server is running, waiting for messages..." << std::endl;
 //
-//
-//	    //2
-//	    //Listen for incoming messages
 //	    while (true) {
 //	        int rcvid;
 //	        msg_struct msg; // Message received from the client
-//	        rcvid = MsgReceive(attach->chid, &msg, sizeof(msg), NULL);
 //
+//	        // Receive a message
+//	        rcvid = MsgReceive(attach->chid, &msg, sizeof(msg), NULL);
 //	        if (rcvid == -1) {
 //	            perror("MsgReceive");
 //	            continue;
 //	        }
 //
-//	        //
-//	        //Filtering the noise!!!!!
 //	        if (rcvid == 0) {
-//	           //filter out background noise
-//	        	continue;
+//	            continue; // Ignore pulse messages
 //	        }
 //
-//	        //printout received on server side
-//	        cout <<SEPAR<< "ComputerSystem: Received command for Airplane " << msg.id
-//	                  << ": " << msg.body << endl<<SEPAR;
+//	        // Log the received message
+//	        cout<<SEPAR << "ComputerSystem: Received command for Aircraft " << msg.id
+//	                  << ": " << msg.command << " with value " << msg.value << endl;
+//
+////////////////////////////////////////////////////////////////////////////////////////
+//	        //Block
+//	        // Passing command to Plane
+//	        //
+//
+//	         tempId=msg.id;
+//	         tempCommand = msg.command;
+//	         tempValue = msg.value;
+//
+////	         if(tempCommand == "ct"){
+////	        	 this->delta=tempValue;
+////	        	 cout << "\n\nHERE WE CHANGE DELTA\n\n";
+////	        			 return;
+////	         }
 //
 //
-//	    //3
-//	        //Reply back to the client
+//
+//	       	//Block
+//	        //////////////////////////////////////////////////////////////////////////////////////
+//
+//
+//	        // Reply back to the client (acknowledge the message)
 //	        msg_struct reply;
-//	        reply.id = msg.id;
-//	        strncpy(reply.body, processedMessage.c_str(), sizeof(reply.body) - 1);
-//	        reply.body[sizeof(reply.body) - 1] = '\0'; // Ensure null termination
+//	        reply.id = msg.id; // Echo back the ID
+//	        strncpy(reply.command, ">> ComputerSystem: Received Command", sizeof(reply.command) - 1);
+//	        reply.command[sizeof(reply.command) - 1] = '\0'; // Ensure null termination
+//	        reply.value = 0; // Optional value for reply
 //
 //	        MsgReply(rcvid, 0, &reply, sizeof(reply));
+//
+////	        msg_struct reply = {msg.id};
+////	        strncpy(reply.command, "Acknowledged", sizeof(reply.command) - 1);
+////	        reply.command[sizeof(reply.command) - 1] = '\0';
+////	        reply.value = 0; // No processing, just acknowledgment
+////
+////	        MsgReply(rcvid, 0, &reply, sizeof(reply));
 //	    }
 //
-//	    // 4. Detach the name
+//	    // Detach the channel
 //	    name_detach(attach, 0);
-//	    nullptr;
+//	    return nullptr;
+//}
+
+
+
+//
+
+
+//void* ComputerSystem::processCommandsToCommunication(void *arg){
+////	ComputerSystem* sys = static_cast<ComputerSystem*>(arg);
+////	sys->processCommandsToCommunication();
+//
+//	 const char* CHANNEL_NAME = "CommunicationSystemServer";
+//
+//	    while (true) {
+//	        unsigned int localId;
+//	        std::string localCommand;
+//	        int localValue;
+//
+//	        //Lock mutex to access and modify global variables
+//	        //assigning global variable to local
+//	        {
+//	            lock_guard<mutex> lock(commandMutex);
+//	            localId = tempId;
+//	            localCommand = tempCommand;
+//	            localValue = tempValue;
+//
+//	            //skip empty data
+//	            if (localId == 0 || localCommand == " " || localValue == 0) {
+//	                sleep(1);
+//	                continue;
+//	            }
+//
+//	            //reseting for the new message values
+//	            tempId = 0;
+//	            tempCommand = " ";
+//	            tempValue = 0;
+//	        }
+//
+//	        //1
+//	        //Channel open
+//	        int coid = name_open(CHANNEL_NAME, 0);
+//	        if (coid == -1) {
+//	            std::cerr << "ERROR: Failed to connect to channel: " << CHANNEL_NAME << std::endl;
+//	            sleep(1);
+//	            continue;
+//	        }
+//
+//	        std::cout << SEPARATE << "ComputerSystem: Connected to CommunicationSystem on channel: " << CHANNEL_NAME << std::endl;
+//
+//	        //2
+//	        //Message
+//	        msg_struct msg;
+//	        msg.id = localId;
+//	        strncpy(msg.command, localCommand.c_str(), sizeof(msg.command) - 1);
+//	        msg.command[sizeof(msg.command) - 1] = '\0';
+//	        msg.value = localValue;
+//
+//	        msg_struct reply;
+//	        if (MsgSend(coid, &msg, sizeof(msg), &reply, sizeof(reply)) == -1) {
+//	            perror("Error sending message");
+//	            name_close(coid);
+//	            sleep(1);
+//	            continue;
+//	        }
+//
+//
+//	        cout << SEPARATE << "ComputerSystem: Received reply from CommunicationSystem - " << reply.command << SEPARATE;
+//
+//	        //3
+//	        //Close Channel
+//	        name_close(coid);
+//
+//
+////	        sleep(1);
+//	    }
+//
+//	    return nullptr;
+//
+//
 //}
 
 
