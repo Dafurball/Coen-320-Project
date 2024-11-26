@@ -87,6 +87,8 @@ void* CommunicationSystem::startServerThread(void* arg) {
 
         // Process the command and call appropriate planeManager method
         std::string command(msg.command);
+
+
         if (command == "cs") {
             system->manager->changeSpeed(msg.id, msg.value);
         } else if (command == "ca") {

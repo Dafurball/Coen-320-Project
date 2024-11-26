@@ -140,6 +140,12 @@ void* ComputerSystem::startServer(void*) {
 	         tempCommand = msg.command;
 	         tempValue = msg.value;
 
+//	         if(tempCommand == "ct"){
+//	        	 this->delta=tempValue;
+//	        	 cout << "\n\nHERE WE CHANGE DELTA\n\n";
+//	        			 return;
+//	         }
+
 
 
 	       	//Block
@@ -271,7 +277,7 @@ void ComputerSystem::collisionTest() {
             pthread_rwlock_rdlock(&rwlock);
 
             //How far into the future do we check for collisions, need to find a way to change/set it during runtime
-            int delta = 1;
+//            int delta = 1;
 
             int future_x_of_i = shared_data[i].get_x() + shared_data[i].get_speedX() * delta;
             int future_y_of_i = shared_data[i].get_y() + shared_data[i].get_speedY() * delta;

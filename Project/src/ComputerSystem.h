@@ -48,7 +48,7 @@ private:
 
     bool running_collision;
     bool running_coms;
-    // int delta = 1;
+     int delta = 1;
 
     pthread_t ComputerSystem_thread;
     pthread_t comms_thread;
