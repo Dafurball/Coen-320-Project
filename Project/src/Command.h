@@ -7,12 +7,13 @@
 #include <unordered_map>
 
 //Enum for Commands
+//Here are all the commands available to Controller
 enum class Command {
-    PP,	//printPlane
+    PP,	//print airplane information
     CA,	//change altitude
     CS,	//change speed
     CP,	//change position
-    CT,	//change time between collision
+    CT,	//change time between collision check
     INVALID
 };
 

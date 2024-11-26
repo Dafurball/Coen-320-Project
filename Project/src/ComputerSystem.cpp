@@ -20,7 +20,6 @@
 using namespace std;
 
 
-
 //Message structure for IPC
 typedef struct {
     unsigned int id;
@@ -31,13 +30,13 @@ typedef struct {
 
 
 
-
+//Global variables to store data passed in msg_struct to further transmit to CommunicationSystem
 int tempId=0;
 string tempCommand = " ";
 int tempValueX  = 0;
 int tempValueY  = 0;
 
-std::mutex commandMutex;
+mutex commandMutex;	//mutex for access
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -111,17 +110,15 @@ void* ComputerSystem::startServer(void* arg) {
 
 	 ComputerSystem* system = static_cast<ComputerSystem*>(arg);
 
-
 	//1 Open Channel
     name_attach_t* attach = name_attach(NULL, "ComputerSystemServer", 0);
-
     if (attach == NULL) {
         perror("name_attach");
-
     }
 
     cout << "ComputerSystem is running, waiting for requests ..." << std::endl;
 
+    //keep checking for incoming commands
     while (true) {
         int rcvid;
         msg_struct msg;
@@ -139,6 +136,7 @@ void* ComputerSystem::startServer(void* arg) {
         }
 
 
+        //Changing time between collision checks
         //Change delta if command is "ct"
         if (string(msg.command) == "ct") {
                     {
@@ -179,12 +177,9 @@ void* ComputerSystem::startServer(void* arg) {
 //Channel between ComputerSystem(client) and CommunicationSystem(server)
 //Third thread for channel between computer and communication
 void* ComputerSystem::processCommandsToCommunication(void* arg) {
-
-
-    const char* CHANNEL_NAME = "CommunicationSystemServer";
+    const char* CHANNEL_NAME = "CommunicationSystemServer";		//name of communicationSystem server
 
     while (true) {
-
     	//local temp values
         unsigned int localId;
         string localCommand;
@@ -192,7 +187,7 @@ void* ComputerSystem::processCommandsToCommunication(void* arg) {
 
         //Modifying global variables
         {
-            std::lock_guard<std::mutex> lock(commandMutex);
+            lock_guard<mutex> lock(commandMutex);
             localId = tempId;
             localCommand = tempCommand;
             localValueX = tempValueX;
@@ -210,7 +205,7 @@ void* ComputerSystem::processCommandsToCommunication(void* arg) {
             tempValueY = 0;
         }
 
-        //1 Channel
+        //1 Create Channel
         int coid = name_open(CHANNEL_NAME, 0);
         if (coid == -1) {
             std::cerr << "ERROR: Failed to connect to channel: " << CHANNEL_NAME << std::endl;
@@ -218,7 +213,8 @@ void* ComputerSystem::processCommandsToCommunication(void* arg) {
             continue;
         }
 
-        //2 Message
+        //2 Open Message
+        //Include variables passed from OperatorConsole (which were stored in ComputerSystem class as global variables)
         msg_struct msg;
         msg.id = localId;
         strncpy(msg.command, localCommand.c_str(), sizeof(msg.command) - 1);
@@ -226,16 +222,15 @@ void* ComputerSystem::processCommandsToCommunication(void* arg) {
         msg.valueX = localValueX;
         msg.valueY = localValueY;
 
-        //3
+        //3 Reply to Server (we are not sending anything back)
         msg_struct reply;
         if (MsgSend(coid, &msg, sizeof(msg), &reply, sizeof(reply)) == -1) {
             perror("Error sending message");
             name_close(coid);
-//            sleep(1);
             continue;
         }
 
-        //4
+        //4 Close Channel
         name_close(coid);
     }
 

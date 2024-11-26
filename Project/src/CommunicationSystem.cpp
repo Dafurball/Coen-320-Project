@@ -102,7 +102,7 @@ void* CommunicationSystem::startServerThread(void* arg) {
             system->manager->changeDirection(msg.id, msg.valueX, msg.valueY);
             cout <<endl;
         } else if (command == "ct") {
-//            cout << "Do nothing" << std::endl;
+//            cout << "Do nothing" << endl;
         } else if (command == "pp") {
         	cout << SEPAR << "REQUESTING PLANE INFORMATION FROM CONSOLE: \n\n";
             system->manager->printPlane(msg.id);

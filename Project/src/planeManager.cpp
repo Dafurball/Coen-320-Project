@@ -162,7 +162,8 @@ void planeManager::changeSpeed(int id, int newSpeed){
 			shared_data[i].change_speed(speedScaling);
 
 	        std::lock_guard<std::mutex> lock(cout_mutex);
-			cout << "Plane " << id << " will now have a speed of " << shared_data[i].get_speed() << endl;
+
+			cout << "Plane " << id << " will now have a speed of " << newSpeed << endl;
 
 			pthread_rwlock_unlock(&rwlock);
 
@@ -183,7 +184,7 @@ void planeManager::changeAltitude(int id,int altitude){
 			shared_data[i].change_altitude(altitude);
 
 			std::lock_guard<std::mutex> lock(cout_mutex);
-			cout << "Plane " << id << " will now have an altitude of " << shared_data[i].get_z() << endl;
+			cout << "Plane " << id << " will now have an altitude of " << altitude << endl;
 
 			pthread_rwlock_unlock(&rwlock);
 
@@ -205,7 +206,8 @@ void planeManager::changeDirection(int id ,int x,int y){
 			shared_data[i].change_direction(x,y);
 
 			std::lock_guard<std::mutex> lock(cout_mutex);
-			cout << "Plane " << id << " will now go in the direction of (" << shared_data[i].get_x() << ","<< shared_data[i].get_y() <<")" << endl;
+
+			cout << "Plane " << id << " will now go in the direction of (" << x << ","<< y <<")" << endl;
 
 			pthread_rwlock_unlock(&rwlock);
 

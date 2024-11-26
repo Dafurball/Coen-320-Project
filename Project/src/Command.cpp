@@ -5,7 +5,9 @@
 
 #include "Command.h"
 
-Command stringToCommand(const std::string& command) {
+using namespace std;
+
+Command stringToCommand(const string& command) {
     static const std::unordered_map<std::string, Command> commandMap = {
         {"pp", Command::PP},
         {"ca", Command::CA},

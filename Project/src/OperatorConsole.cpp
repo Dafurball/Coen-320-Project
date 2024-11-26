@@ -65,6 +65,7 @@ void OperatorConsole::handleCommands() {
     	//Parsing input data from controller
     	//Getting id of plane, command and value from controller
     	//Based on the ammount of values written aftercommand (or lack thereod) we fill up the missing values with ones to stay consistent with msg_struct
+    	//Here we are also checking if the commands are valid based on all the commands in Enum class
         getline(std::cin, input);
 
         istringstream iss(input);
@@ -76,7 +77,7 @@ void OperatorConsole::handleCommands() {
         }
 
         if (tokens.size() < 2 || tokens.size() > 4) {
-            std::cerr << "ERROR: Invalid command format. Please refer to command menu\n";
+            cerr << "ERROR: Invalid command format. Please refer to command menu\n";
             continue;
         }
 
@@ -109,9 +110,8 @@ void OperatorConsole::handleCommands() {
             continue;
         }
 
-
-        cout << "\n>> Processing command '" << commandStr
-                          << "' for Aircraft ID " << aircraftID<<endl<<endl;
+        //Print to console
+        cout << "\n>> Processing command '" << commandStr<< "' for Aircraft ID " << aircraftID<<endl<<endl;
 
 
         // Send the command
