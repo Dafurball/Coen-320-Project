@@ -81,10 +81,10 @@ int main() {
     CommunicationSystem communsystem(manager);
     communsystem.startCommunicationThread();
 
-    manager.printPlane(103);
-    manager.changeSpeed(103, 100);
-   manager.changeAltitude(103, 100);
-   manager.changeDirection(103, 100, 200);
+//    manager.printPlane(103);
+//    manager.changeSpeed(103, 100);
+//   manager.changeAltitude(103, 100);
+//   manager.changeDirection(103, 100, 200);
 
 
 
