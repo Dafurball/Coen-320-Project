@@ -151,20 +151,20 @@ void timer_callback(union sigval sv) {
 void printWelcome(){
 
     cout << "************************************************************" << endl;
-    cout << "*                                                          *" << endl;
-    cout << "*              AIR TRAFFIC CONTROL SYSTEM                  *" << endl;
-    cout << "*                                                          *" << endl;
+    cout << "*                                                          		*" << endl;
+    cout << "*              AIR TRAFFIC CONTROL SYSTEM                  		*" << endl;
+    cout << "*                                                          		*" << endl;
     cout << "************************************************************" << endl;
     cout << "************************************************************" << endl;
-    cout << "*                                                          *" << endl;
-    cout << "*    Commands:                                             *" << endl;
-    cout << "*      pp 1 - Print plane details                          *" << endl;
-    cout << "*      ca [value x] - Change altitude                      *" << endl;
-    cout << "*      cs [value x]- Change speed                          *" << endl;
-    cout << "*      cp [value x] [value y] - Change position            *" << endl;
-    cout << "*      ct [delta i]- Change time between collision         *" << endl;
-    cout << "*                                                          *" << endl;
-    cout << "************************************************************" << endl;
+    cout << "*                                                          		*" << endl;
+    cout << "*    Commands:                                             		*" << endl;
+    cout << "*    [plane id] pp 1 - Print plane details                         *" << endl;
+    cout << "*    [plane id] ca [value x] - Change altitude                     *" << endl;
+    cout << "*    [plane id] cs [value x]- Change speed                         *" << endl;
+    cout << "*    [plane id] cp [value x] [value y] - Change position           *" << endl;
+    cout << "*    [plane id] ct [delta i]- Change time between collision        *" << endl;
+    cout << "*                                                          		*" << endl;
+    cout << "********************************************************************" << endl;
 	cout << endl<< endl;
 
 }

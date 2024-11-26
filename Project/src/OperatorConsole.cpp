@@ -18,10 +18,18 @@ std::mutex inputMutex;
 
 //Message structure for IPC
 typedef struct {
-	unsigned int id;       //airplane id
-	    char command[100];      //command
-	    int value;             //number to increment
+    unsigned int id;        // Airplane ID
+    char command[100];      // Command string
+    int valueX;             // Additional value (X)
+    int valueY;             // Additional value (Y)
 } msg_struct;
+
+//OLD struct
+//typedef struct {
+//	unsigned int id;       //airplane id
+//	    char command[100];      //command
+//	    int value;             //number to increment
+//} msg_struct;
 
 
 
@@ -33,7 +41,9 @@ OperatorConsole::~OperatorConsole() {
 	// TODO Auto-generated destructor stub
 }
 
-
+pthread_t OperatorConsole::getconsoleThread() const {
+    return consoleThread;
+}
 
 //Start Thread
 void OperatorConsole::startOperatorConsoleThread() {
@@ -47,105 +57,112 @@ void* OperatorConsole::processCommands(void* arg) {
     return nullptr;
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void OperatorConsole::handleCommands() {
-	 std::string input;
-
-	    while (true) {
-//	        cout << ">> ";
-	        getline(cin, input);
-
-	        if (input == "exit") {
-	            std::cout << "Shutting down the system...\n";
-	            break;
-	        }
-
-	        size_t firstSpace = input.find(' ');
-	               size_t secondSpace = input.find(' ', firstSpace + 1);
-	               if (firstSpace == std::string::npos || secondSpace == std::string::npos) {
-	                   cerr <<ERROR<< "Invalid command format. Use: <AircraftID> <Command> <Value>\n";
-	                   continue;
-	               }
-
-	       string idStr = input.substr(0, firstSpace);
-	                     string commandStr = input.substr(firstSpace + 1, secondSpace - firstSpace - 1);
-	                      string valueStr = input.substr(secondSpace + 1);
-//
-
-	        	//check id
-	               int aircraftID,value;
-
-	               try {
-	            	   aircraftID = std::stoi(idStr);
-	            	   value = std::stoi(valueStr);
-	               } catch (const std::exception& e) {
-	                   cerr << ERROR << "Error: Invalid Airplane ID or value. Please enter a valid int number!\n"<< ERROR;
-	                   continue;
-	               }
+    std::string input;
+    while (true) {
+        // Display prompt for user input
+        getline(cin, input);
 
 
-	               //check id is in the PlaneManager / is in shared memory
-	               int isValidID = manager->checkIds(aircraftID);
-	               if (!isValidID) {
-	                   cerr<< ERROR << ERROR<< "Error: Aircraft ID " << aircraftID << " not found in the airspace.\n"<< ERROR;
-	                   continue;
-	               }
+//        if (input == "exit") {
+//            std::cout << "Exiting Operator Console." << std::endl;
+//            break;
+//        }
 
-	               //is in enum list of commands
-	               Command command = stringToCommand(commandStr);
-	                      if (command == Command::INVALID) {
-	                          cerr << ERROR<< "Invalid command: " << commandStr << endl;
-	                          continue;
-	                      }
+        // Parse the input
+        size_t firstSpace = input.find(' ');
+        size_t secondSpace = input.find(' ', firstSpace + 1);
+        size_t thirdSpace = input.find(' ', secondSpace + 1);
 
-	               //2
-	               //Send command
-	               cout << ">> Processing command '" << commandStr << "' for Aircraft ID " << aircraftID << " Value:  "<<value<<endl;
+        // Check for correct input format
+        if (firstSpace == std::string::npos || secondSpace == std::string::npos || thirdSpace == std::string::npos) {
+            std::cerr << "Error: Invalid command format. Use: <AircraftID> <Command> <ValueX> <ValueY>\n";
+            continue;
+        }
 
-	               sendCommand(aircraftID, commandStr, value);
+        //Parsing input
+        string idStr = input.substr(0, firstSpace);
+        string commandStr = input.substr(firstSpace + 1, secondSpace - firstSpace - 1);
+        string valueXStr = input.substr(secondSpace + 1, thirdSpace - secondSpace - 1);
+        string valueYStr = input.substr(thirdSpace + 1);
+
+        int aircraftID, valueX, valueY;
 
 
-	    }
-}
+        try {
+            aircraftID = std::stoi(idStr);
+            valueX = std::stoi(valueXStr);
+            valueY = std::stoi(valueYStr);
+        } catch (const std::exception& e) {
+            std::cerr << "Error: Invalid input values. Please enter valid integers!\n";
+            continue;
+        }
 
-void OperatorConsole::sendCommand(int aircraftID, const std::string& command, int value){
+        //check airplane id
+        int isValidID = manager->checkIds(aircraftID);
+        if (!isValidID) {
+            std::cerr << "Error: Aircraft ID " << aircraftID << " not found.\n";
+            continue;
+        }
 
-	//1.
-	//Open the channel to connect to the Computer System (server)
-	    int coid = name_open(CHANNEL_NAME, 0);
-	    if (coid == -1) {
-	        cerr << ERROR<< "Operator " << " failed to connect to channel: " << CHANNEL_NAME << endl<< ERROR;
-	        return;
-	    }
+        //Check if command valid
+        Command command = stringToCommand(commandStr);
+        if (command == Command::INVALID) {
+            std::cerr << "Error: Invalid command: " << commandStr << "\n";
+            continue;
+        }
 
-	    cout << ASTERISKS << "Operator " <<  " connected to server on channel: " << CHANNEL_NAME <<  endl;
 
-	    // Prepare the message
-	       msg_struct msg;
-	       msg.id = aircraftID;
-	       strncpy(msg.command, command.c_str(), sizeof(msg.command) - 1);
-	       msg.command[sizeof(msg.command) - 1] = '\0';
-	       msg.value = value;
+        std::cout << ">> Processing command '" << commandStr
+                  << "' for Aircraft ID " << aircraftID
+                  << " with ValueX: " << valueX
+                  << " and ValueY: " << valueY << "\n";
 
-	       // Send the message
-	       msg_struct reply;
-	       if (MsgSend(coid, &msg, sizeof(msg), &reply, sizeof(reply)) == -1) {
-	           perror("Error sending message");
-	           name_close(coid);
-	           return;
-	       }
-
-	       // Print the server's reply
-	       std::cout << "OperatorConsole: Received reply: " << reply.command <<endl;
-
-	       name_close(coid);
-
-}
-
-pthread_t OperatorConsole::getconsoleThread() const {
-    return consoleThread;
+        // Send the command
+        sendCommand(aircraftID, commandStr, valueX, valueY);
+    }
 }
 
 
+
+
+
+void OperatorConsole::sendCommand(int aircraftID, const std::string& command, int valueX, int valueY) {
+
+	//1 Open channel
+    int coid = name_open(CHANNEL_NAME, 0);
+    if (coid == -1) {
+        cerr << ERROR << "Operator failed to connect to channel: " << CHANNEL_NAME << endl << ERROR;
+        return;
+    }
+
+    cout << ASTERISKS << "Operator connected to server on channel: " << CHANNEL_NAME << endl;
+
+    //2 Prepare the message
+    msg_struct msg;
+    msg.id = aircraftID;
+    strncpy(msg.command, command.c_str(), sizeof(msg.command) - 1);
+    msg.command[sizeof(msg.command) - 1] = '\0';
+    msg.valueX = valueX;
+    msg.valueY = valueY;
+
+    // Send the message
+    msg_struct reply;
+    if (MsgSend(coid, &msg, sizeof(msg), &reply, sizeof(reply)) == -1) {
+        perror("Error sending message");
+        name_close(coid);
+        return;
+    }
+
+    cout << "OperatorConsole: Received reply: " << reply.command << endl;
+
+    name_close(coid);
+}
+
+
+//OLD
 
 //void OperatorConsole::handleCommands() {
 //	 std::string input;
@@ -159,50 +176,56 @@ pthread_t OperatorConsole::getconsoleThread() const {
 //	            break;
 //	        }
 //
-//	        // Parse the input to extract AircraftID and command string
-//	        size_t spacePos = input.find(' ');
-//	        if (spacePos == std::string::npos) {
-//	            std::cerr <<ERROR<< "Invalid command format. Use: <AircraftID> <Command>\n"<<ERROR;
-//	            continue;
-//	        }
+//	        size_t firstSpace = input.find(' ');
+//	               size_t secondSpace = input.find(' ', firstSpace + 1);
+//	               if (firstSpace == std::string::npos || secondSpace == std::string::npos) {
+//	                   cerr <<ERROR<< "Invalid command format. Use: <AircraftID> <Command> <Value>\n";
+//	                   continue;
+//	               }
 //
-//	        string idStr = input.substr(0, spacePos);
-//	        string commandStr = input.substr(spacePos + 1);
-//
+//	       string idStr = input.substr(0, firstSpace);
+//	                     string commandStr = input.substr(firstSpace + 1, secondSpace - firstSpace - 1);
+//	                      string valueStr = input.substr(secondSpace + 1);
 ////
 //
 //	        	//check id
-//	               int aircraftID;
+//	               int aircraftID,value;
+//
 //	               try {
-//	                   aircraftID = std::stoi(idStr);
+//	            	   aircraftID = std::stoi(idStr);
+//	            	   value = std::stoi(valueStr);
 //	               } catch (const std::exception& e) {
-//	                   std::cerr << ERROR << "Error: Invalid Airplane ID. Please enter a valid number.\n"<< ERROR;
+//	                   cerr << ERROR << "Error: Invalid Airplane ID or value. Please enter a valid int number!\n"<< ERROR;
 //	                   continue;
 //	               }
+//
+//
 //	               //check id is in the PlaneManager / is in shared memory
 //	               int isValidID = manager->checkIds(aircraftID);
 //	               if (!isValidID) {
-//	                   std::cerr << ERROR<< "Error: Aircraft ID " << aircraftID << " not found in the airspace.\n"<< ERROR;
+//	                   cerr<< ERROR << ERROR<< "Error: Aircraft ID " << aircraftID << " not found in the airspace.\n"<< ERROR;
 //	                   continue;
 //	               }
 //
 //	               //is in enum list of commands
 //	               Command command = stringToCommand(commandStr);
-//	               if (command == Command::INVALID) {
-//	                   std::cerr << ERROR<< "Error: Command '" << commandStr << "' not valid. Valid commands are: pp, e, ca, cs, cp, ct.\n"<< ERROR;
-//	                   continue;
-//	               }
-//
+//	                      if (command == Command::INVALID) {
+//	                          cerr << ERROR<< "Invalid command: " << commandStr << endl;
+//	                          continue;
+//	                      }
 //
 //	               //2
 //	               //Send command
-//	               std::cout << "Processing command '" << commandStr << "' for Aircraft ID " << aircraftID << ".\n";
-//	               sendCommand(aircraftID, commandStr);
+//	               cout << ">> Processing command '" << commandStr << "' for Aircraft ID " << aircraftID << " Value:  "<<value<<endl;
+//
+//	               sendCommand(aircraftID, commandStr, value);
 //
 //
 //	    }
 //}
-//
+
+
+
 //void OperatorConsole::sendCommand(int aircraftID, const std::string& command, int value){
 //
 //	//1.
@@ -214,47 +237,15 @@ pthread_t OperatorConsole::getconsoleThread() const {
 //	    }
 //
 //	    cout << ASTERISKS << "Operator " <<  " connected to server on channel: " << CHANNEL_NAME <<  endl;
-
-	    //2
-	    //Message
+//
+//	    // Prepare the message
 //	       msg_struct msg;
 //	       msg.id = aircraftID;
-//	       strncpy(msg.body, command.c_str(), sizeof(msg.body) - 1);
-//	       msg.body[sizeof(msg.body) - 1] = '\0'; // Ensure null termination
-//
-//	       std::cout << "\nOperatorConsole: Sending command to ComputerSystem: " << msg.body <<ASTERISKS<< std::endl;
-//
-//	       //3
-//	       //Structure for the server's reply
-//	       msg_struct reply;
-//
-//	       //4
-//	       //Send the message to the server and wait for a reply
-//	       int status = MsgSend(coid, &msg, sizeof(msg), &reply, sizeof(reply));
-//	       if (status == -1) {
-//	           perror("MsgSend");
-//	           name_close(coid);
-//	           return;
-//	       }
-//
-//
-//	       std::cout << "\nOperatorConsole: Received reply from ComputerSystem: " << reply.body <<ASTERISKS<< std::endl;
-//
-//	       //Close connection
-//	       name_close(coid);
-//	       return;
-
-
-
-	    //2
-	    //Message
-//	    msg_struct msg;
-//	       msg.id = aircraftID;
-//	       strncpy(msg.command, commandToString(command).c_str(), sizeof(msg.command) - 1);
-//	       msg.command[sizeof(msg.command) - 1] = '\0'; // Ensure null-termination
+//	       strncpy(msg.command, command.c_str(), sizeof(msg.command) - 1);
+//	       msg.command[sizeof(msg.command) - 1] = '\0';
 //	       msg.value = value;
 //
-//	    // Send the message
+//	       // Send the message
 //	       msg_struct reply;
 //	       if (MsgSend(coid, &msg, sizeof(msg), &reply, sizeof(reply)) == -1) {
 //	           perror("Error sending message");
@@ -262,11 +253,16 @@ pthread_t OperatorConsole::getconsoleThread() const {
 //	           return;
 //	       }
 //
-//	     //Reply from server
-//	       std::cout << "OperatorConsole: Received reply: " << reply.command << std::endl;
+//	       // Print the server's reply
+//	       std::cout << "OperatorConsole: Received reply: " << reply.command <<endl;
 //
 //	       name_close(coid);
+//
+//}
 
 
-//}-
+
+
+
+
 
