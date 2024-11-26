@@ -8,7 +8,6 @@
 Command stringToCommand(const std::string& command) {
     static const std::unordered_map<std::string, Command> commandMap = {
         {"pp", Command::PP},
-        {"e", Command::E},
         {"ca", Command::CA},
         {"cs", Command::CS},
         {"cp", Command::CP},

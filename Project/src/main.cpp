@@ -26,19 +26,26 @@ struct TimerData {
     int numPlanes; // Number of planes
 };
 
+
+//Function declarations
 void timer_callback(union sigval);
 
 void setup_timer(timer_t& timerid, TimerData* timerData);
 
 void printWelcome();
 
+
+
+//Main
+
 int main() {
 
 	//Welcome Message
 	printWelcome();
 
-////////////////////////////////////////////////////////////////////////////////////Airplanes and their Manager////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    const std::string filename = "/data/var/tmp/example.txt";
+	////////////////////////////////////////////////////////////////////////////////////Set up for Airplanes and their Manager////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	    //File from where we will load the airplanes from, choose from low/med/high congestion
+		const std::string filename = "/data/var/tmp/example.txt";
 
     // Create and initialize the plane manager
     planeManager manager(filename);
@@ -61,8 +68,7 @@ int main() {
 
 ////////////////////////////////////////////////////////////////////////////////////Remaining ATC Set Up////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    // Start plane threads
-    manager.startPlaneThreads();
+
 
     //Initialize and start radar threads
     radar Radar(manager.getNumOfPlanes());
@@ -78,14 +84,11 @@ int main() {
     OperatorConsole console(manager);
     console.startOperatorConsoleThread();
 
+    //Initializing CommunicationSystem
     CommunicationSystem communsystem(manager);
     communsystem.startCommunicationThread();
 
-//    manager.printPlane(103);
-//    manager.changeSpeed(103, 100);
-//   manager.changeAltitude(103, 100);
-//   manager.changeDirection(103, 100, 200);
-
+    cout <<endl<<endl;
 
 
     //Joining all the threads into the main thread
@@ -147,7 +150,7 @@ void timer_callback(union sigval sv) {
     }
 }
 
-
+//Welcome message with commands
 void printWelcome(){
 
     cout << "********************************************************************" << endl;
@@ -158,11 +161,11 @@ void printWelcome(){
     cout << "********************************************************************" << endl;
     cout << "*                                                                  *" << endl;
     cout << "*    Commands:                                                     *" << endl;
-    cout << "*    [plane id] pp 1 1 - Print plane details                       *" << endl;
-    cout << "*    [plane id] ca [value x] 0 - Change altitude                   *" << endl;
-    cout << "*    [plane id] cs [value x] 0 - Change speed                      *" << endl;
+    cout << "*    [plane id] pp - Print plane details                           *" << endl;
+    cout << "*    [plane id] ca [value x] - Change altitude                     *" << endl;
+    cout << "*    [plane id] cs [value x] - Change speed                        *" << endl;
     cout << "*    [plane id] cp [value x] [value y] - Change position           *" << endl;
-    cout << "*    [plane id] ct [delta i] 0 - Change time between collision     *" << endl;
+    cout << "*    [plane id] ct [delta i] - Change time between collision       *" << endl;
     cout << "*                                                                  *" << endl;
     cout << "********************************************************************" << endl;
 	cout << endl<< endl;

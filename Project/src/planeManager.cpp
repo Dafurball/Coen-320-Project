@@ -24,9 +24,11 @@ planeManager::~planeManager() {
     delete[] planes;
     delete[] planeThreads;
 }
-
+////////////////////////////////////////////////////////////////////////////////Shared Memory Set up///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void planeManager::initialize() {
-    std::ifstream inputFile(filename);
+
+    //Load file we will be reading from for airplanes
+    ifstream inputFile(filename);
     if (!inputFile) {
         throw std::runtime_error("Failed to open airplane data file: " + filename);
     }
@@ -42,10 +44,11 @@ void planeManager::initialize() {
     planes = new airplane[numOfPlanes];
     planeThreads = new pthread_t[numOfPlanes];
 
-    // Reset file cursor and parse the plane data
+    //Resets file cursor for next step
     inputFile.clear();
     inputFile.seekg(0);
 
+    //Count of total number of planes, used for dynamic array creation
     int index = 0;
     while (std::getline(inputFile, line)) {
         std::istringstream iss(line);
@@ -57,54 +60,57 @@ void planeManager::initialize() {
     }
     inputFile.close();
 
-    // Set up shared memory
+    //Creating shared memory for airplane data
     sharedFd = shm_open("/airplane_data", O_CREAT | O_RDWR, 0666);
     if (sharedFd == -1) {
         throw std::runtime_error("Failed to create shared memory");
     }
 
-    // Resize shared memory
+    //Resize shared memory to fit number of planes in airspace
     if (ftruncate(sharedFd, sizeof(airplane) * numOfPlanes) == -1) {
         throw std::runtime_error("Failed to resize shared memoory");
     }
 
-        // Map shared memory
-        shared_data = static_cast<airplane*>(mmap(nullptr, sizeof(airplane) * numOfPlanes,
-                                                 PROT_READ | PROT_WRITE, MAP_SHARED, sharedFd, 0));
-        if (shared_data == MAP_FAILED) {
-            throw std::runtime_error("Failed to map shared memory");
-        }
+    //Memory map the shared memory
+	shared_data = static_cast<airplane*>(mmap(nullptr, sizeof(airplane) * numOfPlanes,
+											 PROT_READ | PROT_WRITE, MAP_SHARED, sharedFd, 0));
+	if (shared_data == MAP_FAILED) {
+		throw std::runtime_error("Failed to map shared memory");
+	}
 
-        // Copy planes into shared memory
-        for (int i = 0; i < numOfPlanes; ++i) {
-            memcpy(&shared_data[i], &planes[i], sizeof(airplane));
-        }
-    }
+	//Copy airplanes in airspace data to shared memory
+	for (int i = 0; i < numOfPlanes; ++i) {
+		memcpy(&shared_data[i], &planes[i], sizeof(airplane));
+	}
+}
 
-    void planeManager::startPlaneThreads() {
-        for (int i = 0; i < numOfPlanes; ++i) {
-            if (pthread_create(&planeThreads[i], nullptr, airplane::location_update, &shared_data[i]) != 0) {
-                throw std::runtime_error("Failed to create plane thread");
-            }
-        }
-    }
+//Creates threads for airplane
+void planeManager::startPlaneThreads() {
+	for (int i = 0; i < numOfPlanes; ++i) {
+		if (pthread_create(&planeThreads[i], nullptr, airplane::location_update, &shared_data[i]) != 0) {
+			throw std::runtime_error("Failed to create plane thread");
+		}
+	}
+}
 
-    void planeManager::stopPlaneThreads() {
-        for (int i = 0; i < numOfPlanes; ++i) {
-            if (planeThreads[i]) {
-                pthread_join(planeThreads[i], nullptr);
-            }
-        }
-    }
+void planeManager::stopPlaneThreads() {
+	for (int i = 0; i < numOfPlanes; ++i) {
+		if (planeThreads[i]) {
+			pthread_join(planeThreads[i], nullptr);
+		}
+	}
+}
 
-    int planeManager::getNumOfPlanes() const {
-        return numOfPlanes;
-    }
+///////////////////////////////////////////////////////////Used by radar and computersystem to set up shared memory//////////////////////////////////////////////////////////////////////////////////////
+int planeManager::getNumOfPlanes() const {
+	return numOfPlanes;
+}
 
-    airplane* planeManager::getSharedData() const {
-        return shared_data;
-    }
+airplane* planeManager::getSharedData() const {
+	return shared_data;
+}
 
+/////////////////////////////////////////////////////////////////////////////////////Methods used by Communications//////////////////////////////////////////////////////////////////////////////////////
     int planeManager::checkIds(int id){
 		pthread_rwlock_rdlock(&rwlock);
 
@@ -141,7 +147,8 @@ void planeManager::initialize() {
 
 
     }
-    void planeManager::changeSpeed(int id, int newSpeed){
+
+void planeManager::changeSpeed(int id, int newSpeed){
 	pthread_rwlock_rdlock(&rwlock);
 
 	for (int i = 0; i < numOfPlanes; i++){
@@ -187,6 +194,7 @@ void planeManager::changeAltitude(int id,int altitude){
 	return;
 
 }
+
 void planeManager::changeDirection(int id ,int x,int y){
 	pthread_rwlock_rdlock(&rwlock);
 
@@ -207,4 +215,3 @@ void planeManager::changeDirection(int id ,int x,int y){
 	pthread_rwlock_unlock(&rwlock);
 	return;
 }
-

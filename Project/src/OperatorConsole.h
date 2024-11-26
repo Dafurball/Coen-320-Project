@@ -27,30 +27,29 @@ public:
 	virtual ~OperatorConsole();
 
 
+	//Start the thread
 	void startOperatorConsoleThread();
+
 	// Function that sends a command to aircraft (to request airplane to change its course)
-
-
 	void sendCommand(int aircraftID, const std::string& command, int valueX, int valueY);
 
 
-	//OLD
-//	void sendCommand(int aircraftID, const std::string& command, int value);
-
+	//get the thread
 	pthread_t getconsoleThread() const;
 
 
 private:
 	planeManager * manager;
-
 	pthread_t consoleThread;
+
+
 	// Flag to control the running state of the thread
 	std::atomic<bool> runningOperatorConsole;
 
-	    // Static function to run as the pthread entry point
+	//Function processes commands received & sends them in message to ComputerSystem
 	static void* processCommands(void* arg);
 
-	    // Internal method for processing user commands
+	//Function reads commands from controller
 	void handleCommands();
 
 

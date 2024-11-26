@@ -18,13 +18,6 @@ using namespace std;
 
 
 
-
-
-//radar::radar() {
-	// TODO Auto-generated constructor stub
-
-//}
-
 radar::~radar() {
     stopRadarThread();
 

@@ -15,7 +15,7 @@
 #include "radar.h"
 #include "airplane.h"
 
-#include <queue>      // For std::queue
+#include <queue>
 #include <mutex>
 
 class ComputerSystem {
@@ -23,22 +23,18 @@ public:
 	ComputerSystem(int numPlanes);
 	virtual ~ComputerSystem();
 
-	//Thread 1
+	//Start threads
 	void startSystemThread();
 	void startComms();
-
-	//Thread with Communication
 	void startCommunicationThread();
 
-
+	//get threads
 	pthread_t getSystemThread() const;
 	pthread_t getComThread() const;
 	pthread_t getToCommunication_thread() const;
 
+	//Perform collision test
 	void collisionTest();
-
-
-
 
 
 private:
@@ -48,22 +44,22 @@ private:
 
     bool running_collision;
     bool running_coms;
-    int delta = 1;
+    int delta = 1;	//for changeTimeBetweenCollision
 
-    pthread_t ComputerSystem_thread;
-    pthread_t comms_thread;
-
-    pthread_t toCommunication_thread;	//!!!
+    //3 threads for Computer System
+    pthread_t ComputerSystem_thread;	//collision detection
+    pthread_t comms_thread;				//OperatorSystem to ComputerSystem channel
+    pthread_t toCommunication_thread;	//ComputerSystem to CommunicationSystem channel
 
 
 	static void* collision(void* arg);
+
+	//Start server to listen for Operator's commands
 	static void* startServer(void *arg);
 
-	static void* processCommandsToCommunication(void *arg);	//!!!
+	//process operator's commands
+	static void* processCommandsToCommunication(void *arg);
 	void processCommandsToCommunication(int aircraftID, const std::string& command, int value);
-
-
-	//?????????
 
 
 };
