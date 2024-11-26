@@ -59,14 +59,14 @@ pthread_t CommunicationSystem::getCommunicationThread() const{
 void* CommunicationSystem::startServerThread(void* arg) {
     CommunicationSystem* system = static_cast<CommunicationSystem*>(arg);
 
-    //Channel
+    //Open Channel
     name_attach_t* attach = name_attach(NULL, "CommunicationSystemServer", 0);
     if (attach == NULL) {
         perror("name_attach");
         return nullptr;
     }
 
-    cout <<  "CommunicationSystem: Server is running, waiting for messages...";
+    cout <<  "CommunicationSystem is running, waiting for operator's commands ...";
 
     while (true) {
         int rcvid;
@@ -104,7 +104,7 @@ void* CommunicationSystem::startServerThread(void* arg) {
         } else if (command == "ct") {
 //            cout << "Do nothing" << std::endl;
         } else if (command == "pp") {
-        	cout << SEPAR << "REQUESTING PLANE INFORMATION FROM CONSOLE: \n";
+        	cout << SEPAR << "REQUESTING PLANE INFORMATION FROM CONSOLE: \n\n";
             system->manager->printPlane(msg.id);
             cout << SEPAR;
         } else {
@@ -113,9 +113,9 @@ void* CommunicationSystem::startServerThread(void* arg) {
             cout <<endl;
         }
 
-        //Reply
+        //Reply to client
         msg_struct reply;
-        reply.id = msg.id; // Echo back the ID
+        reply.id = msg.id;
         strncpy(reply.command, "\nCommunicationSystem: Command Processed", sizeof(reply.command) - 1);
         reply.command[sizeof(reply.command) - 1] = '\0';
         reply.valueX = 0;

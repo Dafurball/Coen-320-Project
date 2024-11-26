@@ -61,10 +61,12 @@ void* OperatorConsole::processCommands(void* arg) {
 void OperatorConsole::handleCommands() {
     string input;
     while (true) {
-        // Display prompt for user input
+
+    	//Parsing input data from controller
+    	//Getting id of plane, command and value from controller
+    	//Based on the ammount of values written aftercommand (or lack thereod) we fill up the missing values with ones to stay consistent with msg_struct
         getline(std::cin, input);
 
-        //Parsing input data from controller
         istringstream iss(input);
         vector<string> tokens;
         string token;
@@ -74,7 +76,7 @@ void OperatorConsole::handleCommands() {
         }
 
         if (tokens.size() < 2 || tokens.size() > 4) {
-            std::cerr << "Error: Invalid command format. Use: <AircraftID> <Command> [ValueX] [ValueY]\n";
+            std::cerr << "ERROR: Invalid command format. Please refer to command menu\n";
             continue;
         }
 
@@ -89,29 +91,28 @@ void OperatorConsole::handleCommands() {
             if (tokens.size() > 2) valueX = std::stoi(tokens[2]);
             if (tokens.size() > 3) valueY = std::stoi(tokens[3]);
         } catch (const std::exception& e) {
-            cerr << "Error: Invalid input values. Please enter valid integers!\n";
+            cerr << "ERROR: Invalid input. Enter int values\n";
             continue;
         }
 
         //Check by airplane id in shared memory
         int isValidID = manager->checkIds(aircraftID);
         if (!isValidID) {
-            std::cerr << "Error: Aircraft ID " << aircraftID << " not found.\n";
+            std::cerr << "ERROR: Airplane with ID " << aircraftID << " is not in the airspace\n";
             continue;
         }
 
         //Validating command input
         Command command = stringToCommand(commandStr);
         if (command == Command::INVALID) {
-            std::cerr << "Error: Invalid command: " << commandStr << "\n";
+            std::cerr << "ERROR: Invalid command " << commandStr << "\n";
             continue;
         }
 
+
         cout << "\n>> Processing command '" << commandStr
-                  << "' for Aircraft ID " << aircraftID;
-        if (tokens.size() > 2) std::cout << " with ValueX: " << valueX;
-        if (tokens.size() > 3) std::cout << " and ValueY: " << valueY;
-        cout << "\n\n";
+                          << "' for Aircraft ID " << aircraftID<<endl<<endl;
+
 
         // Send the command
         sendCommand(aircraftID, commandStr, valueX, valueY);

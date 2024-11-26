@@ -112,7 +112,7 @@ void* ComputerSystem::startServer(void* arg) {
 	 ComputerSystem* system = static_cast<ComputerSystem*>(arg);
 
 
-	//Open channel with OperatorConsole
+	//1 Open Channel
     name_attach_t* attach = name_attach(NULL, "ComputerSystemServer", 0);
 
     if (attach == NULL) {
@@ -120,13 +120,13 @@ void* ComputerSystem::startServer(void* arg) {
 
     }
 
-    cout << "ComputerSystem: Server is running, waiting for messages..." << std::endl;
+    cout << "ComputerSystem is running, waiting for requests ..." << std::endl;
 
     while (true) {
         int rcvid;
         msg_struct msg;
 
-        //Receive a message
+        //2 Receive Message
         rcvid = MsgReceive(attach->chid, &msg, sizeof(msg), NULL);
         if (rcvid == -1) {
             perror("MsgReceive");
