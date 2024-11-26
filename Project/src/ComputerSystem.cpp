@@ -167,14 +167,18 @@ void* ComputerSystem::startServer(void* arg) {
 
 
 void* ComputerSystem::processCommandsToCommunication(void* arg) {
+
+
     const char* CHANNEL_NAME = "CommunicationSystemServer";
 
     while (true) {
+
+    	//local temp values
         unsigned int localId;
-        std::string localCommand;
+        string localCommand;
         int localValueX, localValueY;
 
-        // Lock and read global variables
+        //Modifying global variables
         {
             std::lock_guard<std::mutex> lock(commandMutex);
             localId = tempId;
@@ -187,13 +191,14 @@ void* ComputerSystem::processCommandsToCommunication(void* arg) {
                 continue;
             }
 
+            //reinitializing global values to 0
             tempId = 0;
             tempCommand = " ";
             tempValueX = 0;
             tempValueY = 0;
         }
 
-        // Open a channel to CommunicationSystem
+        //1 Channel
         int coid = name_open(CHANNEL_NAME, 0);
         if (coid == -1) {
             std::cerr << "ERROR: Failed to connect to channel: " << CHANNEL_NAME << std::endl;
@@ -203,7 +208,7 @@ void* ComputerSystem::processCommandsToCommunication(void* arg) {
 
         std::cout << SEPARATE << "ComputerSystem: Connected to CommunicationSystem on channel: " << CHANNEL_NAME << std::endl;
 
-        // Prepare the message
+        //2 Message
         msg_struct msg;
         msg.id = localId;
         strncpy(msg.command, localCommand.c_str(), sizeof(msg.command) - 1);
@@ -211,17 +216,18 @@ void* ComputerSystem::processCommandsToCommunication(void* arg) {
         msg.valueX = localValueX;
         msg.valueY = localValueY;
 
-        // Send the message
+        //3
         msg_struct reply;
         if (MsgSend(coid, &msg, sizeof(msg), &reply, sizeof(reply)) == -1) {
             perror("Error sending message");
             name_close(coid);
-            sleep(1);
+//            sleep(1);
             continue;
         }
 
         std::cout << SEPARATE << "ComputerSystem: Received reply from CommunicationSystem - " << reply.command << SEPARATE;
 
+        //4
         name_close(coid);
     }
 
