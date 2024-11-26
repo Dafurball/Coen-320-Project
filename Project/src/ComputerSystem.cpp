@@ -36,6 +36,10 @@ string tempCommand = " ";
 int tempValue = 0;
 
 
+
+std::mutex commandMutex;
+
+
 ComputerSystem::ComputerSystem(int numPlanes): numofPlanes(numPlanes), running_collision(false) {
     // Open the shared memory segment created by radar
     shm_fd= shm_open("/airplane_data", O_CREAT | O_RDWR, 0666);
@@ -169,19 +173,31 @@ void* ComputerSystem::processCommandsToCommunication(void *arg){
 //	ComputerSystem* sys = static_cast<ComputerSystem*>(arg);
 //	sys->processCommandsToCommunication();
 
-	  // Define the CommunicationSystem channel name
-	    const char* CHANNEL_NAME = "CommunicationSystemServer";
+	 const char* CHANNEL_NAME = "CommunicationSystemServer";
 
 	    while (true) {
-	        //Getting values of global variables
-	        unsigned int localId = tempId;
-	        std::string localCommand = tempCommand;
-	        int localValue = tempValue;
+	        unsigned int localId;
+	        std::string localCommand;
+	        int localValue;
 
-	        //skip
-	        if (localId == 0 || localCommand == " " || localValue == 0) {
-	            sleep(1);
-	            continue;
+	        //Lock mutex to access and modify global variables
+	        //assigning global variable to local
+	        {
+	            lock_guard<mutex> lock(commandMutex);
+	            localId = tempId;
+	            localCommand = tempCommand;
+	            localValue = tempValue;
+
+	            //skip empty data
+	            if (localId == 0 || localCommand == " " || localValue == 0) {
+	                sleep(1);
+	                continue;
+	            }
+
+	            //reseting for the new message values
+	            tempId = 0;
+	            tempCommand = " ";
+	            tempValue = 0;
 	        }
 
 	        //1
@@ -189,41 +205,37 @@ void* ComputerSystem::processCommandsToCommunication(void *arg){
 	        int coid = name_open(CHANNEL_NAME, 0);
 	        if (coid == -1) {
 	            std::cerr << "ERROR: Failed to connect to channel: " << CHANNEL_NAME << std::endl;
-	            sleep(1); // Retry after a delay
+	            sleep(1);
 	            continue;
 	        }
 
-	        cout <<SEPARATE << "ComputerSystem: Connected to CommunicationSystem on channel: " << CHANNEL_NAME << std::endl;
+	        std::cout << SEPARATE << "ComputerSystem: Connected to CommunicationSystem on channel: " << CHANNEL_NAME << std::endl;
 
-	        // Prepare the message
+	        //2
+	        //Message
 	        msg_struct msg;
 	        msg.id = localId;
 	        strncpy(msg.command, localCommand.c_str(), sizeof(msg.command) - 1);
-	        msg.command[sizeof(msg.command) - 1] = '\0'; // Ensure null termination
+	        msg.command[sizeof(msg.command) - 1] = '\0';
 	        msg.value = localValue;
 
-	        // Send the message to CommunicationSystem
 	        msg_struct reply;
 	        if (MsgSend(coid, &msg, sizeof(msg), &reply, sizeof(reply)) == -1) {
 	            perror("Error sending message");
 	            name_close(coid);
-	            sleep(1); // Retry after a delay
+	            sleep(1);
 	            continue;
 	        }
 
-	        // Print the reply from CommunicationSystem
-	        cout <<SEPARATE << "ComputerSystem: Received reply from CommunicationSystem - " << reply.command << endl<<SEPARATE;
 
-	        // Close the channel
+	        cout << SEPARATE << "ComputerSystem: Received reply from CommunicationSystem - " << reply.command << SEPARATE;
+
+	        //3
+	        //Close Channel
 	        name_close(coid);
 
-	        // Reset global variables after sending
-	        tempId = 0;
-	        tempCommand = " ";
-	        tempValue = 0;
 
-	        // Sleep to avoid rapid consecutive iterations
-	        sleep(1);
+//	        sleep(1);
 	    }
 
 	    return nullptr;
