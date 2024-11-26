@@ -105,13 +105,18 @@ pthread_t ComputerSystem::getToCommunication_thread() const{
 	return toCommunication_thread;
 }
 
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-
-
 void* ComputerSystem::startServer(void* arg) {
+
+	 ComputerSystem* system = static_cast<ComputerSystem*>(arg);
+
+
+	//Open channel with OperatorConsole
     name_attach_t* attach = name_attach(NULL, "ComputerSystemServer", 0);
+
     if (attach == NULL) {
         perror("name_attach");
         return nullptr;
@@ -123,32 +128,49 @@ void* ComputerSystem::startServer(void* arg) {
         int rcvid;
         msg_struct msg;
 
-        // Receive a message
+        //Receive a message
         rcvid = MsgReceive(attach->chid, &msg, sizeof(msg), NULL);
         if (rcvid == -1) {
             perror("MsgReceive");
             continue;
         }
 
+        //Ignoring pulse messages
         if (rcvid == 0) {
-            continue; // Ignore pulse messages
+            continue;
         }
 
-        // Log received message
-        std::cout << SEPAR << "ComputerSystem: Received command for Aircraft " << msg.id
+        //Printing message
+        cout << SEPAR << "ComputerSystem: Received command for Aircraft " << msg.id
                   << ": " << msg.command << " with valueX: " << msg.valueX
                   << ", valueY: " << msg.valueY << std::endl;
 
-        // Update global variables for processing
-        {
-            std::lock_guard<std::mutex> lock(commandMutex);
-            tempId = msg.id;
-            tempCommand = msg.command;
-            tempValueX = msg.valueX;
-            tempValueY = msg.valueY;
-        }
+        // Updating global variables
+//        {
+//            std::lock_guard<std::mutex> lock(commandMutex);
+//            tempId = msg.id;
+//            tempCommand = msg.command;
+//            tempValueX = msg.valueX;
+//            tempValueY = msg.valueY;
+//        }
 
-        // Reply back to the client
+        // Handle 'ct' command to update delta
+                if (std::string(msg.command) == "ct") {
+                    {
+                    	std::lock_guard<std::mutex> lock(commandMutex);
+                        system->delta = msg.valueX;
+                    }
+                    std::cout << "Updated delta to " << system->delta << " based on 'ct' command." << std::endl;
+                } else {
+                    // Update global variables for other commands
+                	std::lock_guard<std::mutex> lock(commandMutex);
+                	            tempId = msg.id;
+                	            tempCommand = msg.command;
+                	            tempValueX = msg.valueX;
+                	            tempValueY = msg.valueY;
+                }
+        /////////////////////////////////////////////////////
+        //Reply to client
         msg_struct reply;
         reply.id = msg.id;
         strncpy(reply.command, ">> Command Received", sizeof(reply.command) - 1);
@@ -159,6 +181,7 @@ void* ComputerSystem::startServer(void* arg) {
         MsgReply(rcvid, 0, &reply, sizeof(reply));
     }
 
+    //Close
     name_detach(attach, 0);
     return nullptr;
 }

@@ -159,10 +159,10 @@ void printWelcome(){
     cout << "*                                                                  *" << endl;
     cout << "*    Commands:                                                     *" << endl;
     cout << "*    [plane id] pp 1 1 - Print plane details                       *" << endl;
-    cout << "*    [plane id] ca [value x] - Change altitude                     *" << endl;
-    cout << "*    [plane id] cs [value x]- Change speed                         *" << endl;
+    cout << "*    [plane id] ca [value x] 0 - Change altitude                   *" << endl;
+    cout << "*    [plane id] cs [value x] 0 - Change speed                      *" << endl;
     cout << "*    [plane id] cp [value x] [value y] - Change position           *" << endl;
-    cout << "*    [plane id] ct [delta i]- Change time between collision        *" << endl;
+    cout << "*    [plane id] ct [delta i] 0 - Change time between collision     *" << endl;
     cout << "*                                                                  *" << endl;
     cout << "********************************************************************" << endl;
 	cout << endl<< endl;

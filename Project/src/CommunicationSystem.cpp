@@ -20,7 +20,7 @@
 #include "planeManager.h"
 
 
-#define SEPAR "\n\n------------------------------------------------------------------\n\n"
+#define SEPAR "\n\n-------------------------------------------------------------------------\n\n"
 
 using namespace std;
 
@@ -106,11 +106,13 @@ void* CommunicationSystem::startServerThread(void* arg) {
         } else if (command == "cp") {
             system->manager->changeDirection(msg.id, msg.valueX, msg.valueY);
         } else if (command == "ct") {
-            std::cout << "Command 'ct': Change time between collisions is not implemented yet." << std::endl;
+            cout << "Do nothing" << std::endl;
         } else if (command == "pp") {
+        	cout << SEPAR << "REQUESTING PLANE INFORMATION FROM CONSOLE: \n";
             system->manager->printPlane(msg.id);
+            cout << SEPAR;
         } else {
-            std::cout << "Unknown command received: " << command << std::endl;
+            cout << "Unknown command received: " << command << std::endl;
         }
 
         // Reply back to the client (acknowledge the message)
